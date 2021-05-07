@@ -1,0 +1,6 @@
+[workspace]
+
+members = [
+    "cell-map-impl",
+    "cell-map-macro"
+]
