@@ -23,7 +23,7 @@ ndarray = { version = "0.15", features = ["serde"] }
 # https://github.com/rust-analyzer/rust-analyzer/issues/8654. 
 nalgebra = { version = "0.25.4", features = ["serde-serialize"] }
 serde = { version = "1.0", features = ["derive"] }
-cell-map-macro = { path = "cell-map-macro", version = "0.1.0" }
+cell-map-macro = "0.1"
 
 [workspace]
 
