@@ -1,5 +1,7 @@
 # `cell-map`: many-layer 2D cellular maps
 
+[![Crates.io](https://img.shields.io/crates/v/cell-map?style=flat-square)](https://crates.io/crates/cell-map)[![docs.rs](https://img.shields.io/docsrs/cell-map?style=flat-square)](https://docs.rs/cell-map/)
+
 This crate provides the `CellMap` type, a 2D map with many layers comprised of
 cells that can store arbitrary data. It is based on
 [ANYbotics/grid_map](https://github.com/ANYbotics/grid_map), a C++ ROS package
@@ -10,6 +12,13 @@ scalable format. It also uses `nalgebra` types for expressing vectors and
 points. 
 
 ## Getting Started
+
+Add `cell-map` to your dependencies:
+
+```toml
+[dependencies]
+cell-map = "0.1"
+```
 
 ### Layers
 
