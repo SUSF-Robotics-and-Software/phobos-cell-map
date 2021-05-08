@@ -45,7 +45,7 @@
 //! #     Roughness
 //! # }
 //! // Creates a new 5x5 map where each cell is 1.0 units wide, which is centred on (0, 0).
-//! let my_map = CellMap::<MyLayer, f64>::new(
+//! let my_map = CellMap::<MyLayer, f64>::new_from_elem(
 //!     CellMapParams {
 //!         cell_size: Vector2::new(1.0, 1.0),
 //!         num_cells: Vector2::new(5, 5),
@@ -79,7 +79,7 @@
 //! # }
 //! #
 //! # // Creates a new 5x5 map where each cell is 1.0 units wide, which is centred on (0, 0).
-//! # let mut my_map = CellMap::<MyLayer, f64>::new(
+//! # let mut my_map = CellMap::<MyLayer, f64>::new_from_elem(
 //! #     CellMapParams {
 //! #         cell_size: Vector2::new(1.0, 1.0),
 //! #         num_cells: Vector2::new(5, 5),
@@ -88,7 +88,7 @@
 //! #     1.0,
 //! # );
 //! // Check all the cells in our map are 1, this will be true
-//! asser_eq!(my_map.iter().all(|v| v == 1.0));
+//! assert!(my_map.iter().all(|v| v == 1.0));
 //!
 //! // Use a window iterator to change all cells not on the border of the map to 2
 //! my_map.window_iter_mut(Vector2::new(1, 1)).for_each(|mut v| {
@@ -99,7 +99,7 @@
 //! my_map.iter_mut().layer(MyLayer::Roughness).for_each(|v| *v = 0.0);
 //!
 //! // Check that our map is how we expect it
-//! for ((layer, cell), value) in map.iter().indexed() {
+//! for ((layer, cell), value) in my_map.iter().indexed() {
 //!     if let MyLayer::Roughness = layer {
 //!         assert_eq!(value, 0.0);
 //!     }

@@ -1,6 +1,4 @@
-//! Provides the [`Layer`] trait used to describe the layers within a [`CellMap`].
-//!
-//! [`CellMap`]: crate::CellMap
+//! Provies definition of the [`Layer`] trait.
 
 // ------------------------------------------------------------------------------------------------
 // TRAITS
