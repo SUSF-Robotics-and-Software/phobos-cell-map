@@ -8,6 +8,8 @@ use std::marker::PhantomData;
 
 use crate::{iterators::CellMapIter, Layer};
 
+use super::Indexed;
+
 // ------------------------------------------------------------------------------------------------
 // STRUCTS
 // ------------------------------------------------------------------------------------------------
@@ -59,6 +61,20 @@ where
 
     fn get_y(&self) -> usize {
         self.iter.get_y()
+    }
+}
+
+impl<L, T, I> Layered<L, T, I>
+where
+    L: Layer,
+    I: CellMapIter<L, T>,
+{
+    /// Modifies this iterator to produce the index as well as the cell.
+    pub fn indexed(self) -> Indexed<L, T, Self> {
+        Indexed {
+            iter: self,
+            _phantom: PhantomData,
+        }
     }
 }
 

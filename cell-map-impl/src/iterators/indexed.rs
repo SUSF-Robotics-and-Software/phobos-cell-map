@@ -11,6 +11,8 @@ use nalgebra::Vector2;
 
 use crate::{iterators::CellMapIter, Layer};
 
+use super::Layered;
+
 // ------------------------------------------------------------------------------------------------
 // STRUCTS
 // ------------------------------------------------------------------------------------------------
@@ -48,6 +50,52 @@ where
             Some((index, next))
         } else {
             None
+        }
+    }
+}
+
+impl<L, T, I> CellMapIter<L, T> for Indexed<L, T, I>
+where
+    L: Layer,
+    I: CellMapIter<L, T>,
+{
+    fn limit_layers(&mut self, layers: &[L]) {
+        self.iter.limit_layers(layers)
+    }
+
+    fn get_layer(&self) -> L {
+        self.iter.get_layer()
+    }
+
+    fn get_x(&self) -> usize {
+        self.iter.get_x()
+    }
+
+    fn get_y(&self) -> usize {
+        self.iter.get_y()
+    }
+}
+
+impl<L, T, I> Indexed<L, T, I>
+where
+    L: Layer,
+    I: CellMapIter<L, T>,
+{
+    /// Modifies this iterator to only produce the cells in the given layer.
+    pub fn layer(mut self, layer: L) -> Layered<L, T, Self> {
+        self.limit_layers(&[layer]);
+        Layered {
+            iter: self,
+            _phantom: PhantomData,
+        }
+    }
+
+    /// Modifies this iterator to only produce the cells in the given layers.
+    pub fn layers(mut self, layers: &[L]) -> Layered<L, T, Self> {
+        self.limit_layers(layers);
+        Layered {
+            iter: self,
+            _phantom: PhantomData,
         }
     }
 }
