@@ -120,6 +120,14 @@ where
         L::from_index(self.index.0)
     }
 
+    fn get_layer_checked(&self) -> Option<L> {
+        if self.index.0 < L::NUM_LAYERS {
+            Some(L::from_index(self.index.0))
+        } else {
+            None
+        }
+    }
+
     fn get_x(&self) -> usize {
         self.index.2.clone()
     }
@@ -244,6 +252,14 @@ where
 
     fn get_layer(&self) -> L {
         L::from_index(self.index.0)
+    }
+
+    fn get_layer_checked(&self) -> Option<L> {
+        if self.index.0 < L::NUM_LAYERS {
+            Some(L::from_index(self.index.0))
+        } else {
+            None
+        }
     }
 
     fn get_x(&self) -> usize {

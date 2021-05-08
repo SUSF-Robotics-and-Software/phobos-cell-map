@@ -36,9 +36,18 @@ where
     #[doc(hidden)]
     fn limit_layers(&mut self, layers: &[L]);
 
-    /// Return the current layer of the iterator
+    /// Return the current layer of the iterator.
+    ///
+    /// # Safety
+    ///
+    /// This function will panic if the current layer is out of bounds, use `get_layer_checked` to
+    /// perform this check without the panic.
     #[doc(hidden)]
     fn get_layer(&self) -> L;
+
+    /// Returns the current layer of the iterator, or `None` if the layer is out of bounds.
+    #[doc(hidden)]
+    fn get_layer_checked(&self) -> Option<L>;
 
     /// Return the current x coordinate of the iterator
     #[doc(hidden)]

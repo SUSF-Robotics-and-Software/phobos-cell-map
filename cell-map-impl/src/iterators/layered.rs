@@ -55,6 +55,10 @@ where
         self.iter.get_layer()
     }
 
+    fn get_layer_checked(&self) -> Option<L> {
+        self.iter.get_layer_checked()
+    }
+
     fn get_x(&self) -> usize {
         self.iter.get_x()
     }
@@ -85,11 +89,13 @@ where
 #[cfg(test)]
 mod tests {
 
+    use std::collections::HashSet;
+
     use nalgebra::Vector2;
 
     use crate::{CellMap, CellMapParams, Layer};
 
-    #[derive(Clone, Copy)]
+    #[derive(Clone, Copy, Eq, PartialEq, Debug)]
     #[allow(dead_code)]
     enum MyLayers {
         Layer0,
@@ -169,5 +175,32 @@ mod tests {
                 .count(),
             map.params.num_cells.x * map.params.num_cells.y * 3,
         );
+    }
+
+    #[test]
+    fn indexed() {
+        // Create dummy map
+        let map = CellMap::<MyLayers, f64>::new_from_elem(
+            CellMapParams {
+                cell_size: Vector2::new(1.0, 1.0),
+                num_cells: Vector2::new(5, 5),
+                centre: Vector2::new(0.0, 0.0),
+            },
+            1.0,
+        );
+
+        // Somewhere to store all the cells we visited
+        let mut visited_cells = Vec::new();
+
+        // Create an indexed iterator over the first layer
+        for ((layer, cell), value) in map.iter().layer(MyLayers::Layer0).indexed() {
+            assert_eq!(layer, MyLayers::Layer0);
+            assert_eq!(value, 1.0);
+            visited_cells.push(cell);
+        }
+
+        // Check that all the cell indices are unique
+        let mut unique = HashSet::new();
+        assert!(visited_cells.into_iter().all(move |c| unique.insert(c)));
     }
 }

@@ -4,7 +4,7 @@
 // IMPORTS
 // ------------------------------------------------------------------------------------------------
 
-use std::marker::PhantomData;
+use std::{marker::PhantomData, ops::Index};
 
 use nalgebra::Vector2;
 use ndarray::Array2;
@@ -122,5 +122,16 @@ where
             params,
             layer_type: PhantomData,
         }
+    }
+}
+
+impl<L, T> Index<L> for CellMap<L, T>
+where
+    L: Layer,
+{
+    type Output = Array2<T>;
+
+    fn index(&self, index: L) -> &Self::Output {
+        &self.data[index.to_index()]
     }
 }
