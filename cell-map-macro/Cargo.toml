@@ -7,7 +7,6 @@ description = "Macros for the cell-map crate"
 readme = "readme.md"
 homepage = "https://github.com/duncanrhamill/cell-map"
 repository = "https://github.com/duncanrhamill/cell-map"
-license = "MIT"
 license-file = "license.txt"
 keywords = ["maps", "cell", "map", "grid"]
 
