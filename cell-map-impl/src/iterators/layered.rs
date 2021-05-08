@@ -82,6 +82,19 @@ where
     }
 }
 
+impl<L, T, I> Clone for Layered<L, T, I>
+where
+    L: Layer,
+    I: CellMapIter<L, T> + Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            iter: self.iter.clone(),
+            _phantom: PhantomData,
+        }
+    }
+}
+
 // ------------------------------------------------------------------------------------------------
 // TESTS
 // ------------------------------------------------------------------------------------------------
