@@ -262,7 +262,6 @@ where
 #[cfg(test)]
 mod tests {
     use nalgebra::Vector2;
-    use ndarray::s;
 
     use crate::{CellMap, CellMapParams, Layer};
 
