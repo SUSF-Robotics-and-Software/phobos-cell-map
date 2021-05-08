@@ -10,7 +10,10 @@ use nalgebra::Vector2;
 use ndarray::Array2;
 use serde::{Deserialize, Serialize};
 
-use crate::{extensions::ToShape, iterators::CellIter};
+use crate::{
+    extensions::ToShape,
+    iterators::{CellIter, LayeredIter, LayeredIterMut},
+};
 use crate::{iterators::CellIterMut, Layer};
 
 // ------------------------------------------------------------------------------------------------
@@ -67,9 +70,16 @@ where
     }
 
     /// Returns a mutable iterator over each cell in each layer of the map.
-    pub fn iter_mut(&mut self) -> CellIterMut<'_, L, T> {
+    pub fn iter_mut(&mut self) -> CellIterMut<L, T> {
         CellIterMut {
             index: (0, 0, 0),
+            map: self,
+        }
+    }
+
+    pub fn layerd_iter_mut(&mut self, layer: L) -> LayeredIterMut<L, T> {
+        LayeredIterMut {
+            index: (layer.index(), 0, 0),
             map: self,
         }
     }
@@ -90,6 +100,22 @@ where
             layer_type: PhantomData,
         }
     }
+
+    /// Produces an iterator of owned items over each cell in each layer of `self`.
+    pub fn iter(&self) -> CellIter<L, T> {
+        CellIter {
+            index: (0, 0, 0),
+            map: &self,
+        }
+    }
+
+    /// Produces an interator of owned items over each cell in the given layer.
+    pub fn layerd_iter(&self, layer: L) -> LayeredIter<L, T> {
+        LayeredIter {
+            index: (layer.index(), 0, 0),
+            map: &self,
+        }
+    }
 }
 
 impl<L, T> CellMap<L, T>
@@ -106,14 +132,6 @@ where
             data,
             params,
             layer_type: PhantomData,
-        }
-    }
-
-    /// Produces an iterator of owned items over each cell in each layer of `self`.
-    pub fn iter(&self) -> CellIter<L, T> {
-        CellIter {
-            index: (0, 0, 0),
-            map: &self,
         }
     }
 }

@@ -1,10 +1,4 @@
-//! Provides iterators over [`CellMap`]s
-//!
-//! [`CellMap`]: crate::CellMap
-
-// ------------------------------------------------------------------------------------------------
-// MODULES
-// ------------------------------------------------------------------------------------------------
+//! Provides the [`CellIter`] and [`CellIterMut`] iterators.
 
 // ------------------------------------------------------------------------------------------------
 // IMPORTS
@@ -24,7 +18,7 @@ use crate::{CellMap, Layer};
 /// first layer, then the second row of that layer, and so on until all rows have been produced, at
 /// which point it will move to the next layer.
 ///
-/// To iterate over a single layer use the [`LayerIter`] instead.
+/// To iterate over a single layer use [`LayeredIter`] instead.
 #[derive(Clone)]
 pub struct CellIter<'c, L: Layer, T: Clone> {
     pub(crate) index: (usize, usize, usize),
@@ -38,8 +32,8 @@ pub struct CellIter<'c, L: Layer, T: Clone> {
 /// first layer, then the second row of that layer, and so on until all rows have been produced, at
 /// which point it will move to the next layer.
 ///
-/// To iterate over a single layer use the [`LayerIter`] instead.
-pub struct CellIterMut<'c, L: Layer, T: 'c> {
+/// To iterate over a single layer use [`LayeredIterMut`] instead.
+pub struct CellIterMut<'c, L: Layer, T> {
     pub(crate) index: (usize, usize, usize),
 
     pub(crate) map: &'c mut CellMap<L, T>,
