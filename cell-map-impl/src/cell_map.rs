@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     extensions::ToShape,
-    iterators::{CellIter, CellIterMut},
+    iterators::{CellIter, CellIterMut, WindowIter, WindowIterMut},
     Layer,
 };
 
@@ -75,6 +75,36 @@ where
             layer_limits: None,
             limits_idx: None,
             index: (0, 0, 0),
+            map: self,
+        }
+    }
+
+    /// Returns an iterator over windows of cells in the map.
+    ///
+    /// The `semi_window_size` is half the size of the window in the x and y axes, not including
+    /// the central cell. E.g. to have a window which is in total 5x5, the `semi_window_size` needs
+    /// to be `Vector2::new(2, 2)`.
+    pub fn window_iter(&self, semi_window_size: Vector2<usize>) -> WindowIter<L, T> {
+        WindowIter {
+            layer_limits: None,
+            limits_idx: None,
+            index: (0, semi_window_size.y, semi_window_size.x),
+            semi_window_size,
+            map: self,
+        }
+    }
+
+    /// Returns a mutable iterator over windows of cells in the map.
+    ///
+    /// The `semi_window_size` is half the size of the window in the x and y axes, not including
+    /// the central cell. E.g. to have a window which is in total 5x5, the `semi_window_size` needs
+    /// to be `Vector2::new(2, 2)`.
+    pub fn window_iter_mut(&mut self, semi_window_size: Vector2<usize>) -> WindowIterMut<L, T> {
+        WindowIterMut {
+            layer_limits: None,
+            limits_idx: None,
+            index: (0, semi_window_size.y, semi_window_size.x),
+            semi_window_size,
             map: self,
         }
     }

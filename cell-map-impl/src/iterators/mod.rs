@@ -9,6 +9,7 @@
 mod cell_iter;
 mod indexed;
 mod layered;
+mod window;
 
 // ------------------------------------------------------------------------------------------------
 // EXPORTS
@@ -17,6 +18,7 @@ mod layered;
 pub use cell_iter::{CellIter, CellIterMut};
 pub use indexed::Indexed;
 pub use layered::Layered;
+pub use window::{WindowIter, WindowIterMut};
 
 use crate::Layer;
 
