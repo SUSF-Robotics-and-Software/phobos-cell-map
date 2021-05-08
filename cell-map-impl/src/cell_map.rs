@@ -12,9 +12,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     extensions::ToShape,
-    iterators::{CellIter, LayeredIter, LayeredIterMut},
+    iterators::{CellIter, CellIterMut},
+    Layer,
 };
-use crate::{iterators::CellIterMut, Layer};
 
 // ------------------------------------------------------------------------------------------------
 // STRUCTS
@@ -72,14 +72,9 @@ where
     /// Returns a mutable iterator over each cell in each layer of the map.
     pub fn iter_mut(&mut self) -> CellIterMut<L, T> {
         CellIterMut {
+            layer_limits: None,
+            limits_idx: None,
             index: (0, 0, 0),
-            map: self,
-        }
-    }
-
-    pub fn layerd_iter_mut(&mut self, layer: L) -> LayeredIterMut<L, T> {
-        LayeredIterMut {
-            index: (layer.index(), 0, 0),
             map: self,
         }
     }
@@ -104,15 +99,9 @@ where
     /// Produces an iterator of owned items over each cell in each layer of `self`.
     pub fn iter(&self) -> CellIter<L, T> {
         CellIter {
+            layer_limits: None,
+            limits_idx: None,
             index: (0, 0, 0),
-            map: &self,
-        }
-    }
-
-    /// Produces an interator of owned items over each cell in the given layer.
-    pub fn layerd_iter(&self, layer: L) -> LayeredIter<L, T> {
-        LayeredIter {
-            index: (layer.index(), 0, 0),
             map: &self,
         }
     }

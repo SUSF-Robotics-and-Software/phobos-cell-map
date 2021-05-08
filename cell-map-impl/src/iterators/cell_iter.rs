@@ -4,9 +4,11 @@
 // IMPORTS
 // ------------------------------------------------------------------------------------------------
 
-use std::iter::Iterator;
+use std::{iter::Iterator, marker::PhantomData};
 
 use crate::{CellMap, Layer};
+
+use super::{CellMapIter, Indexed, Layered};
 
 // ------------------------------------------------------------------------------------------------
 // STRUCTS
@@ -17,10 +19,11 @@ use crate::{CellMap, Layer};
 /// The iterator produces items in layer-y-x order, i.e. it will produce the entire row of the
 /// first layer, then the second row of that layer, and so on until all rows have been produced, at
 /// which point it will move to the next layer.
-///
-/// To iterate over a single layer use [`LayeredIter`] instead.
 #[derive(Clone)]
 pub struct CellIter<'c, L: Layer, T: Clone> {
+    pub(crate) layer_limits: Option<Vec<L>>,
+    pub(crate) limits_idx: Option<usize>,
+
     pub(crate) index: (usize, usize, usize),
 
     pub(crate) map: &'c CellMap<L, T>,
@@ -31,9 +34,10 @@ pub struct CellIter<'c, L: Layer, T: Clone> {
 /// The iterator produces items in layer-y-x order, i.e. it will produce the entire row of the
 /// first layer, then the second row of that layer, and so on until all rows have been produced, at
 /// which point it will move to the next layer.
-///
-/// To iterate over a single layer use [`LayeredIterMut`] instead.
 pub struct CellIterMut<'c, L: Layer, T> {
+    pub(crate) layer_limits: Option<Vec<L>>,
+    pub(crate) limits_idx: Option<usize>,
+
     pub(crate) index: (usize, usize, usize),
 
     pub(crate) map: &'c mut CellMap<L, T>,
@@ -47,7 +51,9 @@ impl<'c, L: Layer, T: Clone> Iterator for CellIter<'c, L, T> {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let (l, y, x) = self.index;
+        let l = self.index.0;
+        let y = self.index.1;
+        let x = self.index.2;
 
         // Check if we should still be procuding items
         let data = if l < L::NUM_LAYERS
@@ -68,8 +74,29 @@ impl<'c, L: Layer, T: Clone> Iterator for CellIter<'c, L, T> {
             self.index.1 += 1;
         }
 
-        // If y is now greater than the max y increment layer and set y to 0
-        if self.index.1 >= self.map.params.num_cells.y {
+        // Check if we have limits set on our layers
+        if let Some(ref limits) = self.layer_limits {
+            // If y is now greater than the max y increment the layer and set y to 0
+            if self.index.1 >= self.map.params.num_cells.y {
+                self.index.1 = 0;
+
+                // Get the index into layer_limits of the next layer, we can unwrap since
+                // limits_idx must be set when we set layer_limits.
+                let next_layer_lim_idx = self.limits_idx.unwrap() + 1;
+
+                // If the next index is greater than the length of the layer limits we set the
+                // current layer to the number of layers, which will cause the subsequent call to
+                // next to return None.
+                if next_layer_lim_idx >= limits.len() {
+                    self.index.0 = L::NUM_LAYERS;
+                } else {
+                    self.index.0 = limits[next_layer_lim_idx].to_index();
+                    *self.limits_idx.as_mut().unwrap() += 1;
+                }
+            }
+        }
+        // If not limimted apply same logic as for x, but for y and layers
+        else if self.index.1 >= self.map.params.num_cells.y {
             self.index.1 = 0;
             self.index.0 += 1;
         }
@@ -79,11 +106,68 @@ impl<'c, L: Layer, T: Clone> Iterator for CellIter<'c, L, T> {
     }
 }
 
+impl<L, T> CellMapIter<L, T> for CellIter<'_, L, T>
+where
+    L: Layer,
+    T: Clone,
+{
+    fn limit_layers(&mut self, layers: &[L]) {
+        self.limits_idx = Some(layers[0].to_index());
+        self.layer_limits = Some(layers.into());
+    }
+
+    fn get_layer(&self) -> L {
+        L::from_index(self.index.0)
+    }
+
+    fn get_x(&self) -> usize {
+        self.index.2.clone()
+    }
+
+    fn get_y(&self) -> usize {
+        self.index.1.clone()
+    }
+}
+
+impl<L, T> CellIter<'_, L, T>
+where
+    L: Layer,
+    T: Clone,
+{
+    /// Modifies this iterator to only produce the cells in the given layer.
+    pub fn layer(mut self, layer: L) -> Layered<L, T, Self> {
+        self.limit_layers(&[layer]);
+        Layered {
+            iter: self,
+            _phantom: PhantomData,
+        }
+    }
+
+    /// Modifies this iterator to only produce the cells in the given layers.
+    pub fn layers(mut self, layers: &[L]) -> Layered<L, T, Self> {
+        self.limit_layers(layers);
+        Layered {
+            iter: self,
+            _phantom: PhantomData,
+        }
+    }
+
+    /// Modifies this iterator to produce the index as well as the cell.
+    pub fn indexed(self) -> Indexed<L, T, Self> {
+        Indexed {
+            iter: self,
+            _phantom: PhantomData,
+        }
+    }
+}
+
 impl<'c, L: Layer, T: Clone> Iterator for CellIterMut<'c, L, T> {
     type Item = &'c mut T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let (l, y, x) = self.index;
+        let l = self.index.0;
+        let y = self.index.1;
+        let x = self.index.2;
 
         // Check if we should still be procuding items
         let data = if l < L::NUM_LAYERS
@@ -117,14 +201,89 @@ impl<'c, L: Layer, T: Clone> Iterator for CellIterMut<'c, L, T> {
             self.index.1 += 1;
         }
 
-        // If y is now greater than the max y increment layer and set y to 0
-        if self.index.1 >= self.map.params.num_cells.y {
+        // Check if we have limits set on our layers
+        if let Some(ref limits) = self.layer_limits {
+            // If y is now greater than the max y increment the layer and set y to 0
+            if self.index.1 >= self.map.params.num_cells.y {
+                self.index.1 = 0;
+
+                // Get the index into layer_limits of the next layer, we can unwrap since
+                // limits_idx must be set when we set layer_limits.
+                let next_layer_lim_idx = self.limits_idx.unwrap() + 1;
+
+                // If the next index is greater than the length of the layer limits we set the
+                // current layer to the number of layers, which will cause the subsequent call to
+                // next to return None.
+                if next_layer_lim_idx >= limits.len() {
+                    self.index.0 = L::NUM_LAYERS;
+                } else {
+                    self.index.0 = limits[next_layer_lim_idx].to_index();
+                }
+            }
+        }
+        // If not limimted apply same logic as for x, but for y and layers
+        else if self.index.1 >= self.map.params.num_cells.y {
             self.index.1 = 0;
             self.index.0 += 1;
         }
 
         // Return the data
         data
+    }
+}
+
+impl<L, T> CellMapIter<L, T> for CellIterMut<'_, L, T>
+where
+    L: Layer,
+    T: Clone,
+{
+    fn limit_layers(&mut self, layers: &[L]) {
+        self.limits_idx = Some(layers[0].to_index());
+        self.layer_limits = Some(layers.into());
+    }
+
+    fn get_layer(&self) -> L {
+        L::from_index(self.index.0)
+    }
+
+    fn get_x(&self) -> usize {
+        self.index.2.clone()
+    }
+
+    fn get_y(&self) -> usize {
+        self.index.1.clone()
+    }
+}
+
+impl<L, T> CellIterMut<'_, L, T>
+where
+    L: Layer,
+    T: Clone,
+{
+    /// Modifies this iterator to only produce the cells in the given layer.
+    pub fn layer(mut self, layer: L) -> Layered<L, T, Self> {
+        self.limit_layers(&[layer]);
+        Layered {
+            iter: self,
+            _phantom: PhantomData,
+        }
+    }
+
+    /// Modifies this iterator to only produce the cells in the given layers.
+    pub fn layers(mut self, layers: &[L]) -> Layered<L, T, Self> {
+        self.limit_layers(layers);
+        Layered {
+            iter: self,
+            _phantom: PhantomData,
+        }
+    }
+
+    /// Modifies this iterator to produce the index as well as the cell.
+    pub fn indexed(self) -> Indexed<L, T, Self> {
+        Indexed {
+            iter: self,
+            _phantom: PhantomData,
+        }
     }
 }
 
@@ -138,7 +297,7 @@ mod tests {
 
     use crate::{CellMap, CellMapParams, Layer};
 
-    #[derive(Clone)]
+    #[derive(Clone, Copy)]
     #[allow(dead_code)]
     enum MyLayers {
         Layer0,
@@ -150,11 +309,25 @@ mod tests {
     // reason
     impl Layer for MyLayers {
         const NUM_LAYERS: usize = 3;
-        fn index(&self) -> usize {
+        const FIRST: Self = Self::Layer0;
+        fn to_index(&self) -> usize {
             match self {
-                MyLayers::Layer0 => 0,
-                MyLayers::Layer1 => 1,
-                MyLayers::Layer2 => 2,
+                Self::Layer0 => 0,
+                Self::Layer1 => 1,
+                Self::Layer2 => 2,
+            }
+        }
+
+        fn from_index(index: usize) -> Self {
+            match index {
+                0 => Self::Layer0,
+                1 => Self::Layer1,
+                2 => Self::Layer2,
+                _ => panic!(
+                    "Got a layer index of {} but there are only {} layers",
+                    index,
+                    Self::NUM_LAYERS
+                ),
             }
         }
     }

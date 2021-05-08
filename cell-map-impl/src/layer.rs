@@ -24,7 +24,7 @@
 /// ```
 /// use cell_map::Layer;
 ///
-/// #[derive(Layer)]
+/// #[derive(Layer, Clone)]
 /// enum MyLayer {
 ///     Height,
 ///     Gradient
@@ -32,11 +32,21 @@
 /// ```
 ///
 /// [`CellMap`]: crate::CellMap
-pub trait Layer {
+pub trait Layer: Clone {
     /// Contains the total number of layers possible with this [`Layer`]
     const NUM_LAYERS: usize;
 
+    /// Contains the first layer variant
+    const FIRST: Self;
+
     /// Maps each variant of the enum to a unique layer index, which can be used to get that layer
     /// from the map.
-    fn index(&self) -> usize;
+    fn to_index(&self) -> usize;
+
+    /// Maps each layer index into a variant of the layer.
+    ///
+    /// # Safety
+    ///
+    /// If the provided index doesn't match a layer this function will panic.
+    fn from_index(index: usize) -> Self;
 }
