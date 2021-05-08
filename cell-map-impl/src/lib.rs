@@ -11,10 +11,14 @@
 // ------------------------------------------------------------------------------------------------
 
 mod cell_map;
+pub(crate) mod extensions;
+pub mod iterators;
+mod layer;
 
 // ------------------------------------------------------------------------------------------------
 // EXPORTS
 // ------------------------------------------------------------------------------------------------
 
-pub use crate::cell_map::{CellMap, Layer};
+pub use crate::cell_map::{CellMap, CellMapParams};
 pub use cell_map_macro::Layer;
+pub use layer::Layer;

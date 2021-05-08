@@ -4,9 +4,17 @@ version = "0.1.0"
 authors = ["Duncan Hamill <duncanrhamill@googlemail.com>"]
 edition = "2018"
 
+[lib]
+name = "cell_map"
+path = "src/lib.rs"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 ndarray = { version = "0.15", features = ["serde"] }
+# rust-analyzer can't processes the new const-generics in nalgebra 0.26 yet, so
+# I'm downgrading as per
+# https://github.com/rust-analyzer/rust-analyzer/issues/8654. 
+nalgebra = { version = "0.25.4", features = ["serde-serialize"] }
 serde = { version = "1.0", features = ["derive"] }
 cell-map-macro = { path = "../cell-map-macro" }

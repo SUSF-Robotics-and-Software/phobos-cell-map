@@ -2,7 +2,7 @@
 
 use cell_map_macro::Layer;
 
-#[derive(Layer, PartialEq, Eq, Hash)]
+#[derive(Layer)]
 pub enum MyLayer {
     Height,
     Gradient,
