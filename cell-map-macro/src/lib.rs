@@ -45,6 +45,14 @@ pub fn derive_layer(input: TokenStream) -> TokenStream {
         }
     });
 
+    let var_all_patterns = variants.iter().map(|v| {
+        let var_name = &v.ident;
+
+        quote! {
+            #name::#var_name
+        }
+    });
+
     let first_var_name = &variants[0].ident;
 
     let num_variants = variants.len();
@@ -66,6 +74,10 @@ pub fn derive_layer(input: TokenStream) -> TokenStream {
                     #(#var_from_index_patterns),*,
                     _ => panic!("Got a layer index of {} but there are only {} layers", index, #num_variants)
                 }
+            }
+
+            fn all() -> Vec<Self> {
+                vec![#(#var_all_patterns),*]
             }
         }
     };

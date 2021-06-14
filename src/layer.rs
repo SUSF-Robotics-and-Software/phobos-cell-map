@@ -47,4 +47,7 @@ pub trait Layer: Clone {
     ///
     /// If the provided index doesn't match a layer this function will panic.
     fn from_index(index: usize) -> Self;
+
+    /// Returns a vector of all layers in index order.
+    fn all() -> Vec<Self>;
 }
