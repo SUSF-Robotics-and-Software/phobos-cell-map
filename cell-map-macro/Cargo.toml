@@ -1,6 +1,6 @@
 [package]
 name = "cell-map-macro"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Duncan Hamill <duncanrhamill@googlemail.com>"]
 edition = "2018"
 description = "Macros for the cell-map crate"
