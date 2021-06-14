@@ -162,9 +162,9 @@ where
     fn slice(&self, data: &'a Array2<T>) -> Option<Self::Output> {
         if self.index.in_bounds(&self.bounds) {
             let x0 = self.index.x - self.semi_width.x;
-            let x1 = self.index.x + self.semi_width.x;
+            let x1 = self.index.x + self.semi_width.x + 1;
             let y0 = self.index.y - self.semi_width.y;
-            let y1 = self.index.y + self.semi_width.y;
+            let y1 = self.index.y + self.semi_width.y + 1;
             Some(data.slice(s![y0..y1, x0..x1]))
         } else {
             None
