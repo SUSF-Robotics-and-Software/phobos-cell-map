@@ -88,10 +88,10 @@
 //! #     1.0,
 //! # );
 //! // Check all the cells in our map are 1, this will be true
-//! assert!(my_map.iter().all(|v| v == 1.0));
+//! assert!(my_map.iter().all(|&v| v == 1.0));
 //!
 //! // Use a window iterator to change all cells not on the border of the map to 2
-//! my_map.window_iter_mut(Vector2::new(1, 1)).for_each(|mut v| {
+//! my_map.window_iter_mut(Vector2::new(1, 1)).unwrap().for_each(|mut v| {
 //!     v[(1, 1)] = 2.0;
 //! });
 //!
@@ -99,7 +99,7 @@
 //! my_map.iter_mut().layer(MyLayer::Roughness).for_each(|v| *v = 0.0);
 //!
 //! // Check that our map is how we expect it
-//! for ((layer, cell), value) in my_map.iter().indexed() {
+//! for ((layer, cell), &value) in my_map.iter().indexed() {
 //!     if let MyLayer::Roughness = layer {
 //!         assert_eq!(value, 0.0);
 //!     }
@@ -119,6 +119,7 @@
 // ------------------------------------------------------------------------------------------------
 
 mod cell_map;
+pub mod error;
 pub(crate) mod extensions;
 pub mod iterators;
 mod layer;
@@ -129,4 +130,53 @@ mod layer;
 
 pub use crate::cell_map::{CellMap, CellMapParams};
 pub use cell_map_macro::Layer;
+pub use error::CellMapError;
 pub use layer::Layer;
+
+// ------------------------------------------------------------------------------------------------
+// USEFUL TEST UTILITIES
+// ------------------------------------------------------------------------------------------------
+
+#[cfg(test)]
+mod test_utils {
+    use crate::Layer;
+
+    #[derive(Clone, Copy, Debug)]
+    #[allow(dead_code)]
+    pub enum TestLayers {
+        Layer0,
+        Layer1,
+        Layer2,
+    }
+
+    // Have to do a manual impl because the derive doesn't like working inside this crate, for some
+    // reason
+    impl Layer for TestLayers {
+        const NUM_LAYERS: usize = 3;
+        const FIRST: Self = Self::Layer0;
+        fn to_index(&self) -> usize {
+            match self {
+                Self::Layer0 => 0,
+                Self::Layer1 => 1,
+                Self::Layer2 => 2,
+            }
+        }
+
+        fn from_index(index: usize) -> Self {
+            match index {
+                0 => Self::Layer0,
+                1 => Self::Layer1,
+                2 => Self::Layer2,
+                _ => panic!(
+                    "Got a layer index of {} but there are only {} layers",
+                    index,
+                    Self::NUM_LAYERS
+                ),
+            }
+        }
+
+        fn all() -> Vec<Self> {
+            vec![Self::Layer0, Self::Layer1, Self::Layer2]
+        }
+    }
+}

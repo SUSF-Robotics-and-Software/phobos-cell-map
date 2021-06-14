@@ -70,26 +70,26 @@ well.
 ```rust
 
 // Check all the cells in our map are 1, this will be true
-assert!(my_map.iter().all(|v| v == 1.0));
+assert!(my_map.iter().all(|&v| v == 1.0));
 
 // Use a window iterator to change all cells not on the border of the map to 2
-my_map.window_iter_mut(Vector2::new(1, 1)).for_each(|mut v| {
-        v[(1, 1)] = 2.0;
+my_map.window_iter_mut(Vector2::new(1, 1)).unwrap().for_each(|mut v| {
+    v[(1, 1)] = 2.0;
 });
 
 // Overwrite all values on the Roughness layer to be zero
 my_map.iter_mut().layer(MyLayer::Roughness).for_each(|v| *v = 0.0);
 
 // Check that our map is how we expect it
-for ((layer, cell), value) in my_map.iter().indexed() {
-       if let MyLayer::Roughness = layer {
-           assert_eq!(value, 0.0);
-   }
-   else if cell.x == 0 || cell.x == 4 || cell.y == 0 || cell.y == 4 {
-           assert_eq!(value, 1.0);
-   }
-   else {
-           assert_eq!(value, 2.0);
-   }
+for ((layer, cell), &value) in my_map.iter().indexed() {
+    if let MyLayer::Roughness = layer {
+        assert_eq!(value, 0.0);
+    }
+    else if cell.x == 0 || cell.x == 4 || cell.y == 0 || cell.y == 4 {
+        assert_eq!(value, 1.0);
+    }
+    else {
+        assert_eq!(value, 2.0);
+    }
 }
 ```
