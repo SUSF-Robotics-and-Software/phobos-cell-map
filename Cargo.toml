@@ -24,6 +24,7 @@ ndarray = { version = "0.15", features = ["serde"] }
 nalgebra = { version = "0.25.4", features = ["serde-serialize"] }
 serde = { version = "1.0", features = ["derive"] }
 cell-map-macro = "0.1"
+thiserror = "1"
 
 [workspace]
 

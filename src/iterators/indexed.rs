@@ -1,5 +1,5 @@
-//! Provides an interator which produces indexes along with the values of an iterator over
-//! [`CellMap`].
+//! Provides the [`Indexed`] wrapper type which modifies a [`Slicer`] to produce the current index
+//! as well as the value.
 
 // ------------------------------------------------------------------------------------------------
 // IMPORTS
@@ -9,192 +9,77 @@ use std::marker::PhantomData;
 
 use nalgebra::Vector2;
 
-use crate::{iterators::CellMapIter, Layer};
-
-use super::Layered;
+use crate::{iterators::Slicer, Layer};
 
 // ------------------------------------------------------------------------------------------------
 // STRUCTS
 // ------------------------------------------------------------------------------------------------
 
-/// Modified the wrapped interator to return the index of the cell as well as the cell itself.
-pub struct Indexed<L, T, I>
+/// A [`Slicer`] which wrapps another [`Slicer`] and modifies it to produce the index of the item
+/// as well as the item itself.
+pub struct Indexed<'a, L, T, S>
 where
     L: Layer,
-    I: CellMapIter<L, T>,
+    S: Slicer<'a, L, T>,
 {
-    pub(crate) iter: I,
-
-    pub(crate) _phantom: PhantomData<(L, T)>,
+    pub(crate) slicer: S,
+    pub(crate) layer: L,
+    _phantom: PhantomData<(L, &'a T)>,
 }
 
 // ------------------------------------------------------------------------------------------------
 // IMPLS
 // ------------------------------------------------------------------------------------------------
 
-impl<L, T, I> Iterator for Indexed<L, T, I>
+impl<'a, L, T, S> Indexed<'a, L, T, S>
 where
     L: Layer,
-    I: CellMapIter<L, T>,
+    S: Slicer<'a, L, T>,
 {
-    type Item = ((L, Vector2<usize>), I::Item);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        // Gotta access the index first, as next should increment after yeilding. Must use the
-        // get_layer_checked function instead of get layer to avoid panics once the iterator has
-        // reached the end of the map.
-        let index = (
-            self.get_layer_checked()?,
-            Vector2::new(self.iter.get_x(), self.iter.get_y()),
-        );
-
-        if let Some(next) = self.iter.next() {
-            Some((index, next))
-        } else {
-            return None;
-        }
-    }
-}
-
-impl<L, T, I> CellMapIter<L, T> for Indexed<L, T, I>
-where
-    L: Layer,
-    I: CellMapIter<L, T>,
-{
-    fn limit_layers(&mut self, layers: &[L]) {
-        self.iter.limit_layers(layers)
-    }
-
-    fn get_layer_checked(&self) -> Option<L> {
-        self.iter.get_layer_checked()
-    }
-
-    fn get_layer(&self) -> L {
-        self.iter.get_layer()
-    }
-
-    fn get_x(&self) -> usize {
-        self.iter.get_x()
-    }
-
-    fn get_y(&self) -> usize {
-        self.iter.get_y()
-    }
-}
-
-impl<L, T, I> Indexed<L, T, I>
-where
-    L: Layer,
-    I: CellMapIter<L, T>,
-{
-    /// Modifies this iterator to only produce the cells in the given layer.
-    pub fn layer(mut self, layer: L) -> Layered<L, T, Self> {
-        self.limit_layers(&[layer]);
-        Layered {
-            iter: self,
-            _phantom: PhantomData,
-        }
-    }
-
-    /// Modifies this iterator to only produce the cells in the given layers.
-    pub fn layers(mut self, layers: &[L]) -> Layered<L, T, Self> {
-        self.limit_layers(layers);
-        Layered {
-            iter: self,
-            _phantom: PhantomData,
-        }
-    }
-}
-
-impl<L, T, I> Clone for Indexed<L, T, I>
-where
-    L: Layer,
-    I: CellMapIter<L, T> + Clone,
-{
-    fn clone(&self) -> Self {
+    pub(crate) fn new(slicer: S, layer: L) -> Self {
         Self {
-            iter: self.iter.clone(),
+            slicer,
+            layer,
             _phantom: PhantomData,
         }
     }
 }
 
-// ------------------------------------------------------------------------------------------------
-// TESTS
-// ------------------------------------------------------------------------------------------------
+impl<'a, L, T, S> Slicer<'a, L, T> for Indexed<'a, L, T, S>
+where
+    L: Layer,
+    S: Slicer<'a, L, T>,
+{
+    type Output = ((L, Vector2<usize>), S::Output);
 
-#[cfg(test)]
-mod tests {
+    type OutputMut = ((L, Vector2<usize>), S::OutputMut);
 
-    use nalgebra::Vector2;
-    use ndarray::arr2;
+    fn slice(&self, data: &'a ndarray::Array2<T>) -> Option<Self::Output> {
+        let item = self.slicer.slice(data)?;
 
-    use crate::{CellMap, CellMapParams, Layer};
-
-    #[derive(Clone, Copy, Eq, PartialEq, Debug)]
-    #[allow(dead_code)]
-    enum MyLayers {
-        Layer0,
-        Layer1,
-        Layer2,
+        Some(((self.layer.clone(), self.slicer.index().unwrap()), item))
     }
 
-    // Have to do a manual impl because the derive doesn't like working inside this crate, for some
-    // reason
-    impl Layer for MyLayers {
-        const NUM_LAYERS: usize = 3;
-        const FIRST: Self = Self::Layer0;
-        fn to_index(&self) -> usize {
-            match self {
-                Self::Layer0 => 0,
-                Self::Layer1 => 1,
-                Self::Layer2 => 2,
-            }
-        }
+    fn slice_mut(&self, data: &'a mut ndarray::Array2<T>) -> Option<Self::OutputMut> {
+        let item = self.slicer.slice_mut(data)?;
 
-        fn from_index(index: usize) -> Self {
-            match index {
-                0 => Self::Layer0,
-                1 => Self::Layer1,
-                2 => Self::Layer2,
-                _ => panic!(
-                    "Got a layer index of {} but there are only {} layers",
-                    index,
-                    Self::NUM_LAYERS
-                ),
-            }
-        }
+        Some(((self.layer.clone(), self.slicer.index().unwrap()), item))
     }
 
-    #[test]
-    fn index_correct() {
-        // Create dummy map
-        let mut map = CellMap::<MyLayers, usize>::new_from_elem(
-            CellMapParams {
-                cell_size: Vector2::new(1.0, 1.0),
-                num_cells: Vector2::new(3, 3),
-                centre: Vector2::new(0.0, 0.0),
-            },
-            0,
-        );
+    fn advance(&mut self) {
+        self.slicer.advance()
+    }
 
-        // Set each element in the map to the sum of it's indices
-        map.iter_mut().indexed().for_each(|((layer, cell), value)| {
-            *value = layer.to_index() + cell.x + cell.y;
-        });
+    fn index(&self) -> Option<nalgebra::Vector2<usize>> {
+        self.slicer.index()
+    }
 
-        // Check that each cell is now set correctly
-        assert_eq!(
-            map[MyLayers::Layer0],
-            arr2(&[[0, 1, 2], [1, 2, 3], [2, 3, 4]])
-        );
-        assert_eq!(
-            map[MyLayers::Layer1],
-            arr2(&[[1, 2, 3], [2, 3, 4], [3, 4, 5]])
-        );
-        assert_eq!(
-            map[MyLayers::Layer2],
-            arr2(&[[2, 3, 4], [3, 4, 5], [4, 5, 6]])
-        );
+    fn reset(&mut self, layer: Option<L>) {
+        match layer {
+            Some(ref l) => self.layer = l.clone(),
+            None => (),
+        }
+
+        self.slicer.reset(layer)
     }
 }

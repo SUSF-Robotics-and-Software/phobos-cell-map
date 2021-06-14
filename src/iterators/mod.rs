@@ -1,4 +1,4 @@
-//! Provides iterators over [`CellMap`]s
+//! Provides iterators over [`CellMap`]s.
 //!
 //! [`CellMap`]: crate::CellMap
 
@@ -6,56 +6,310 @@
 // MODULES
 // ------------------------------------------------------------------------------------------------
 
-mod cell_iter;
-mod indexed;
-mod layered;
-mod window;
+pub mod indexed;
+pub mod layerers;
+pub mod slicers;
+#[cfg(test)]
+mod tests;
 
 // ------------------------------------------------------------------------------------------------
-// EXPORTS
+// IMPORTS
 // ------------------------------------------------------------------------------------------------
 
-pub use cell_iter::{CellIter, CellIterMut};
-pub use indexed::Indexed;
-pub use layered::Layered;
-pub use window::{WindowIter, WindowIterMut};
+use layerers::*;
+use nalgebra::Vector2;
+use slicers::*;
 
-use crate::Layer;
+use crate::{CellMap, CellMapError, Layer};
+
+use self::indexed::Indexed;
 
 // ------------------------------------------------------------------------------------------------
-// TRAITS
+// STRUCTS
 // ------------------------------------------------------------------------------------------------
 
-/// Trait which all iterators over [`CellMap`] must implement.
-pub trait CellMapIter<L, T>: Iterator
+/// A non-mutable iterator over a [`CellMap`], see [`Slicer`] and [`layerers`] for more information.
+pub struct CellMapIter<'m, L, T, R, S>
+where
+    L: Layer,
+    S: Slicer<'m, L, T>,
+{
+    map: &'m CellMap<L, T>,
+    layerer: R,
+    slicer: S,
+}
+
+/// A mutable iterator over a [`CellMap`], see [`Slicer`] and [`layerers`] for more information.
+pub struct CellMapIterMut<'m, L, T, R, S>
 where
     L: Layer,
 {
-    /// Limits the iterator to only producing the given layers.
-    ///
-    /// The implementor should also ensure that their current layer is set to the first element of
-    /// `layers`.
-    #[doc(hidden)]
-    fn limit_layers(&mut self, layers: &[L]);
+    map: &'m mut CellMap<L, T>,
+    layerer: R,
+    slicer: S,
+}
 
-    /// Return the current layer of the iterator.
-    ///
-    /// # Safety
-    ///
-    /// This function will panic if the current layer is out of bounds, use `get_layer_checked` to
-    /// perform this check without the panic.
-    #[doc(hidden)]
-    fn get_layer(&self) -> L;
+// ------------------------------------------------------------------------------------------------
+// IMPLS
+// ------------------------------------------------------------------------------------------------
 
-    /// Returns the current layer of the iterator, or `None` if the layer is out of bounds.
-    #[doc(hidden)]
-    fn get_layer_checked(&self) -> Option<L>;
+impl<'m, L, T, R, S> CellMapIter<'m, L, T, R, S>
+where
+    L: Layer,
+    S: Slicer<'m, L, T>,
+    R: Layerer<L>,
+{
+    pub(crate) fn new_cells(map: &'m CellMap<L, T>) -> CellMapIter<'m, L, T, Many<L>, Cells> {
+        CellMapIter {
+            map,
+            layerer: Many {
+                layers: L::all().into(),
+            },
+            slicer: Cells::from_map(map),
+        }
+    }
 
-    /// Return the current x coordinate of the iterator
-    #[doc(hidden)]
-    fn get_x(&self) -> usize;
+    pub(crate) fn new_windows(
+        map: &'m CellMap<L, T>,
+        semi_width: Vector2<usize>,
+    ) -> Result<CellMapIter<'m, L, T, Many<L>, Windows>, CellMapError> {
+        Ok(CellMapIter {
+            map,
+            layerer: Many {
+                layers: L::all().into(),
+            },
+            slicer: Windows::from_map(map, semi_width)?,
+        })
+    }
 
-    /// Return the current y coordinate of the iterator
-    #[doc(hidden)]
-    fn get_y(&self) -> usize;
+    /// Converts this iterator to use a [`Single`] layerer, produing data from only one layer.
+    pub fn layer(self, layer: L) -> CellMapIter<'m, L, T, Single<L>, S> {
+        CellMapIter {
+            map: self.map,
+            layerer: Single { layer },
+            slicer: self.slicer,
+        }
+    }
+
+    /// Converts this iterator to use a [`Many`] layerer, produing data from many layers.
+    pub fn layers(self, layers: &[L]) -> CellMapIter<'m, L, T, Many<L>, S> {
+        CellMapIter {
+            map: self.map,
+            layerer: Many {
+                layers: layers.to_vec().into(),
+            },
+            slicer: self.slicer,
+        }
+    }
+
+    /// Converts this iterator to also produce the index of the iterated item as well as its value.
+    pub fn indexed(self) -> CellMapIter<'m, L, T, R, Indexed<'m, L, T, S>> {
+        let current_layer = self.layerer.current().unwrap();
+        CellMapIter {
+            map: self.map,
+            layerer: self.layerer,
+            slicer: Indexed::new(self.slicer, current_layer),
+        }
+    }
+}
+
+impl<'m, L, T, R, S> CellMapIterMut<'m, L, T, R, S>
+where
+    L: Layer,
+    S: Slicer<'m, L, T>,
+{
+    pub(crate) fn new_cells(
+        map: &'m mut CellMap<L, T>,
+    ) -> CellMapIterMut<'m, L, T, Many<L>, Cells> {
+        let slicer = Cells::from_map(map);
+
+        CellMapIterMut {
+            map,
+            layerer: Many {
+                layers: L::all().into(),
+            },
+            slicer,
+        }
+    }
+
+    pub(crate) fn new_windows(
+        map: &'m mut CellMap<L, T>,
+        semi_width: Vector2<usize>,
+    ) -> Result<CellMapIterMut<'m, L, T, Many<L>, Windows>, CellMapError> {
+        let slicer = Windows::from_map(map, semi_width)?;
+
+        Ok(CellMapIterMut {
+            map,
+            layerer: Many {
+                layers: L::all().into(),
+            },
+            slicer,
+        })
+    }
+
+    /// Converts this iterator to use a [`Single`] layerer, produing data from only one layer.
+    pub fn layer(self, layer: L) -> CellMapIterMut<'m, L, T, Single<L>, S> {
+        CellMapIterMut {
+            map: self.map,
+            layerer: Single { layer },
+            slicer: self.slicer,
+        }
+    }
+
+    /// Converts this iterator to use a [`Many`] layerer, produing data from many layers.
+    pub fn layers(self, layers: &[L]) -> CellMapIterMut<'m, L, T, Many<L>, S> {
+        CellMapIterMut {
+            map: self.map,
+            layerer: Many {
+                layers: layers.to_vec().into(),
+            },
+            slicer: self.slicer,
+        }
+    }
+
+    /// Converts this iterator to use a [`Map`] layerer, which maps data from one layer to another.
+    pub fn map_layers(self, from: L, to: L) -> CellMapIterMut<'m, L, T, Map<L>, S> {
+        CellMapIterMut {
+            map: self.map,
+            layerer: Map { from, to },
+            slicer: self.slicer,
+        }
+    }
+}
+
+// ------------------------------------------------------------------------------------------------
+// ITERATORS
+// ------------------------------------------------------------------------------------------------
+
+impl<'m, L, T, S> Iterator for CellMapIter<'m, L, T, Single<L>, S>
+where
+    L: Layer,
+    S: Slicer<'m, L, T>,
+{
+    type Item = S::Output;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let item = self
+            .slicer
+            .slice(&self.map.data[self.layerer.layer.to_index()]);
+
+        self.slicer.advance();
+
+        item
+    }
+}
+
+impl<'m, L, T, S> Iterator for CellMapIterMut<'m, L, T, Single<L>, S>
+where
+    L: Layer,
+    S: Slicer<'m, L, T>,
+{
+    type Item = S::OutputMut;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        // Note: use of unsafe
+        //
+        // We must guarantee that we don't hand out multiple mutable references to the data stored
+        // in the map, which we can do since each call to this function will drop the previously
+        // returned reference first.
+        let item = unsafe {
+            let layer_ptr = self
+                .map
+                .data
+                .as_mut_ptr()
+                .add(self.layerer.layer.to_index());
+            self.slicer.slice_mut(&mut *layer_ptr)
+        };
+
+        self.slicer.advance();
+
+        item
+    }
+}
+
+impl<'m, L, T, S> Iterator for CellMapIter<'m, L, T, Many<L>, S>
+where
+    L: Layer,
+    S: Slicer<'m, L, T>,
+{
+    type Item = S::Output;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let item = self
+            .slicer
+            .slice(&self.map.data[self.layerer.layers.front()?.to_index()]);
+
+        self.slicer.advance();
+
+        if self.slicer.index().is_none() {
+            self.layerer.layers.pop_front();
+            self.slicer.reset(self.layerer.current());
+        }
+
+        item
+    }
+}
+
+impl<'m, L, T, S> Iterator for CellMapIterMut<'m, L, T, Many<L>, S>
+where
+    L: Layer,
+    S: Slicer<'m, L, T>,
+{
+    type Item = S::OutputMut;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        // Note: use of unsafe
+        //
+        // We must guarantee that we don't hand out multiple mutable references to the data stored
+        // in the map, which we can do since each call to this function will drop the previously
+        // returned reference first.
+        let item = unsafe {
+            let layer_ptr = self
+                .map
+                .data
+                .as_mut_ptr()
+                .add(self.layerer.layers.front()?.to_index());
+            self.slicer.slice_mut(&mut *layer_ptr)
+        };
+
+        self.slicer.advance();
+
+        if self.slicer.index().is_none() {
+            self.layerer.layers.pop_front();
+            self.slicer.reset(self.layerer.current());
+        }
+
+        item
+    }
+}
+
+impl<'m, L, T, S> Iterator for CellMapIterMut<'m, L, T, Map<L>, S>
+where
+    L: Layer,
+    S: Slicer<'m, L, T>,
+{
+    type Item = (S::Output, S::OutputMut);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        // Note: use of unsafe
+        //
+        // We must guarantee that we don't hand out multiple mutable references to the data stored
+        // in the map, which we can do since each call to this function will drop the previously
+        // returned reference first.
+        let (from, to) = unsafe {
+            let from_ptr = self.map.data.as_ptr().add(self.layerer.from.to_index());
+            let from = self.slicer.slice(&*from_ptr);
+            let to_ptr = self.map.data.as_mut_ptr().add(self.layerer.to.to_index());
+            let to = self.slicer.slice_mut(&mut *to_ptr);
+
+            (from, to)
+        };
+
+        self.slicer.advance();
+
+        match (from, to) {
+            (Some(f), Some(t)) => Some((f, t)),
+            (_, _) => None,
+        }
+    }
 }

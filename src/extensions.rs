@@ -8,6 +8,8 @@
 
 use nalgebra::Vector2;
 
+use crate::iterators::slicers::RectBounds;
+
 // ------------------------------------------------------------------------------------------------
 // TRAITS
 // ------------------------------------------------------------------------------------------------
@@ -17,6 +19,13 @@ pub(crate) trait ToShape {
     fn to_shape(&self) -> (usize, usize);
 }
 
+/// Provides extension traits to an [`ndarray::Vector2`].
+pub(crate) trait Vector2Ext {
+    fn in_bounds(&self, bounds: &RectBounds) -> bool;
+
+    fn as_array2_index(&self) -> [usize; 2];
+}
+
 // ------------------------------------------------------------------------------------------------
 // IMPLS
 // ------------------------------------------------------------------------------------------------
@@ -24,5 +33,15 @@ pub(crate) trait ToShape {
 impl ToShape for Vector2<usize> {
     fn to_shape(&self) -> (usize, usize) {
         (self.x, self.y)
+    }
+}
+
+impl Vector2Ext for Vector2<usize> {
+    fn in_bounds(&self, bounds: &RectBounds) -> bool {
+        self.x >= bounds.x.0 && self.x < bounds.x.1 && self.y >= bounds.y.0 && self.y < bounds.y.1
+    }
+
+    fn as_array2_index(&self) -> [usize; 2] {
+        [self.y, self.x]
     }
 }

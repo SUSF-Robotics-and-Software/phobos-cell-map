@@ -12,8 +12,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     extensions::ToShape,
-    iterators::{CellIter, CellIterMut, WindowIter, WindowIterMut},
-    Layer,
+    iterators::{
+        layerers::Many,
+        slicers::{Cells, Windows},
+        CellMapIter, CellMapIterMut,
+    },
+    CellMapError, Layer,
 };
 
 // ------------------------------------------------------------------------------------------------
@@ -69,44 +73,38 @@ where
         self.params.num_cells.clone()
     }
 
-    /// Returns a mutable iterator over each cell in each layer of the map.
-    pub fn iter_mut(&mut self) -> CellIterMut<L, T> {
-        CellIterMut {
-            layer_limits: None,
-            limits_idx: None,
-            index: (0, 0, 0),
-            map: self,
-        }
+    /// Returns an iterator over each cell in all layers of the map.
+    pub fn iter(&self) -> CellMapIter<'_, L, T, Many<L>, Cells> {
+        CellMapIter::<'_, L, T, Many<L>, Cells>::new_cells(self)
+    }
+
+    /// Returns a mutable iterator over each cell in all layers of the map.
+    pub fn iter_mut(&mut self) -> CellMapIterMut<'_, L, T, Many<L>, Cells> {
+        CellMapIterMut::<'_, L, T, Many<L>, Cells>::new_cells(self)
     }
 
     /// Returns an iterator over windows of cells in the map.
     ///
-    /// The `semi_window_size` is half the size of the window in the x and y axes, not including
+    /// The `semi_width` is half the size of the window in the x and y axes, not including
     /// the central cell. E.g. to have a window which is in total 5x5, the `semi_window_size` needs
     /// to be `Vector2::new(2, 2)`.
-    pub fn window_iter(&self, semi_window_size: Vector2<usize>) -> WindowIter<L, T> {
-        WindowIter {
-            layer_limits: None,
-            limits_idx: None,
-            index: (0, semi_window_size.y, semi_window_size.x),
-            semi_window_size,
-            map: self,
-        }
+    pub fn window_iter(
+        &self,
+        semi_width: Vector2<usize>,
+    ) -> Result<CellMapIter<'_, L, T, Many<L>, Windows>, CellMapError> {
+        CellMapIter::<'_, L, T, Many<L>, Windows>::new_windows(self, semi_width)
     }
 
     /// Returns a mutable iterator over windows of cells in the map.
     ///
-    /// The `semi_window_size` is half the size of the window in the x and y axes, not including
+    /// The `semi_width` is half the size of the window in the x and y axes, not including
     /// the central cell. E.g. to have a window which is in total 5x5, the `semi_window_size` needs
     /// to be `Vector2::new(2, 2)`.
-    pub fn window_iter_mut(&mut self, semi_window_size: Vector2<usize>) -> WindowIterMut<L, T> {
-        WindowIterMut {
-            layer_limits: None,
-            limits_idx: None,
-            index: (0, semi_window_size.y, semi_window_size.x),
-            semi_window_size,
-            map: self,
-        }
+    pub fn window_iter_mut(
+        &mut self,
+        semi_width: Vector2<usize>,
+    ) -> Result<CellMapIterMut<'_, L, T, Many<L>, Windows>, CellMapError> {
+        CellMapIterMut::<'_, L, T, Many<L>, Windows>::new_windows(self, semi_width)
     }
 }
 
@@ -123,16 +121,6 @@ where
             data,
             params,
             layer_type: PhantomData,
-        }
-    }
-
-    /// Produces an iterator of owned items over each cell in each layer of `self`.
-    pub fn iter(&self) -> CellIter<L, T> {
-        CellIter {
-            layer_limits: None,
-            limits_idx: None,
-            index: (0, 0, 0),
-            map: &self,
         }
     }
 }
