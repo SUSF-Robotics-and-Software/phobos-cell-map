@@ -32,6 +32,7 @@ use self::indexed::Indexed;
 pub struct CellMapIter<'m, L, T, R, S>
 where
     L: Layer,
+    R: Layerer<L>,
     S: Slicer<'m, L, T>,
 {
     map: &'m CellMap<L, T>,
@@ -43,6 +44,8 @@ where
 pub struct CellMapIterMut<'m, L, T, R, S>
 where
     L: Layer,
+    R: Layerer<L>,
+    S: Slicer<'m, L, T>,
 {
     map: &'m mut CellMap<L, T>,
     layerer: R,
@@ -116,6 +119,7 @@ where
 impl<'m, L, T, R, S> CellMapIterMut<'m, L, T, R, S>
 where
     L: Layer,
+    R: Layerer<L>,
     S: Slicer<'m, L, T>,
 {
     pub(crate) fn new_cells(
@@ -173,6 +177,16 @@ where
             map: self.map,
             layerer: Map { from, to },
             slicer: self.slicer,
+        }
+    }
+
+    /// Converts this iterator to also produce the index of the iterated item as well as its value.
+    pub fn indexed(self) -> CellMapIter<'m, L, T, R, Indexed<'m, L, T, S>> {
+        let current_layer = self.layerer.current().unwrap();
+        CellMapIter {
+            map: self.map,
+            layerer: self.layerer,
+            slicer: Indexed::new(self.slicer, current_layer),
         }
     }
 }
