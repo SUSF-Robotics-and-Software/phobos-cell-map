@@ -17,7 +17,7 @@ Add `cell-map` to your dependencies:
 
 ```toml
 [dependencies]
-cell-map = "0.1"
+cell-map = "0.2"
 ```
 ### Layers
 
