@@ -22,8 +22,8 @@ where
     L: Layer,
     S: Slicer<'a, L, T>,
 {
-    pub(crate) slicer: S,
-    pub(crate) layer: L,
+    slicer: S,
+    layer: L,
     _phantom: PhantomData<(L, &'a T)>,
 }
 

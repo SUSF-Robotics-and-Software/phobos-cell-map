@@ -181,9 +181,9 @@ where
     }
 
     /// Converts this iterator to also produce the index of the iterated item as well as its value.
-    pub fn indexed(self) -> CellMapIter<'m, L, T, R, Indexed<'m, L, T, S>> {
+    pub fn indexed(self) -> CellMapIterMut<'m, L, T, R, Indexed<'m, L, T, S>> {
         let current_layer = self.layerer.current().unwrap();
-        CellMapIter {
+        CellMapIterMut {
             map: self.map,
             layerer: self.layerer,
             slicer: Indexed::new(self.slicer, current_layer),
