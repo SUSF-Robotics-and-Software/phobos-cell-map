@@ -35,7 +35,7 @@
 //! To create a new map:
 //!
 //! ```rust
-//! use cell_map::{CellMap, CellMapParams};
+//! use cell_map::{CellMap, CellMapParams, Layer};
 //! use nalgebra::Vector2;
 //!
 //! # #[derive(Layer, Clone, Debug)]
@@ -44,7 +44,8 @@
 //! #     Gradient,
 //! #     Roughness
 //! # }
-//! // Creates a new 5x5 map where each cell is 1.0 units wide, which is centred on (0, 0).
+//! // Creates a new 5x5 map where each cell is 1.0 units wide, which is centred on (0, 0), with
+//! // all elements initialised to 1.0.
 //! let my_map = CellMap::<MyLayer, f64>::new_from_elem(
 //!     CellMapParams {
 //!         cell_size: Vector2::new(1.0, 1.0),
@@ -57,15 +58,15 @@
 //!
 //! ### Iterating Over Cells
 //!
-//! `CellMap` provides the following iteration types over its cells:
-//!   - `CellIter` - iterate each cell in the map
-//!   - `WindowIter` - iterate a window through the map
+//! [`CellMap`] provides methods to produce iterators over its data:
+//!   - [`CellMap::iter()`] gives an iterator over all cells in every layer of the map
+//!   - [`CellMap::window_iter()`] gives an iterator over rectangular windows into the map.
 //!
 //! All iterators also provide a mutable variant, and more iterators are planned
 //! in the future!
 //!
-//! You can modify iterators so they produce `Layered` or `Indexed` iterators as
-//! well.
+//! You can modify iterators so they produce their indexes, as well as controlling which layers the
+//! data comes from. See [`iterators`] for more information.
 //!
 //! ```rust
 //! # use cell_map::{CellMap, CellMapParams, Layer};
@@ -78,7 +79,8 @@
 //! #     Roughness
 //! # }
 //! #
-//! # // Creates a new 5x5 map where each cell is 1.0 units wide, which is centred on (0, 0).
+//! # // Creates a new 5x5 map where each cell is 1.0 units wide, which is centred on (0, 0), with
+//! # // all elements initialised to 1.0.
 //! # let mut my_map = CellMap::<MyLayer, f64>::new_from_elem(
 //! #     CellMapParams {
 //! #         cell_size: Vector2::new(1.0, 1.0),
@@ -100,7 +102,7 @@
 //!
 //! // Check that our map is how we expect it
 //! for ((layer, cell), &value) in my_map.iter().indexed() {
-//!     if let MyLayer::Roughness = layer {
+//!     if matches!(layer, MyLayer::Roughness) {
 //!         assert_eq!(value, 0.0);
 //!     }
 //!     else if cell.x == 0 || cell.x == 4 || cell.y == 0 || cell.y == 4 {

@@ -4,7 +4,10 @@
 // IMPORTS
 // ------------------------------------------------------------------------------------------------
 
-use std::{marker::PhantomData, ops::Index};
+use std::{
+    marker::PhantomData,
+    ops::{Index, IndexMut},
+};
 
 use nalgebra::Vector2;
 use ndarray::Array2;
@@ -71,6 +74,51 @@ where
     /// Returns the number of cells in each direction of the map.
     pub fn num_cells(&self) -> Vector2<usize> {
         self.params.num_cells.clone()
+    }
+
+    /// Returns whether or not the given index is inside the map.
+    pub fn is_in_map(&self, index: Vector2<usize>) -> bool {
+        index.x < self.params.num_cells.x && index.y < self.params.num_cells.y
+    }
+
+    /// Get a reference to the value at the given layer and index. Returns `None` if the index is
+    /// outside the bounds of the map.
+    pub fn get(&self, layer: L, index: Vector2<usize>) -> Option<&T> {
+        if self.is_in_map(index) {
+            Some(&self[(layer, index)])
+        } else {
+            None
+        }
+    }
+
+    /// Get a reference to the value at the given layer and index, without checking the bounds of
+    /// the map.
+    ///
+    /// # Safety
+    ///
+    /// This function will panic if `index` is outside the map.
+    pub unsafe fn get_unchecked(&self, layer: L, index: Vector2<usize>) -> &T {
+        &self[(layer, index)]
+    }
+
+    /// Get a mutable reference to the value at the given layer and index. Returns `None` if the
+    /// index is outside the bounds of the map.
+    pub fn get_mut(&mut self, layer: L, index: Vector2<usize>) -> Option<&mut T> {
+        if self.is_in_map(index) {
+            Some(&mut self[(layer, index)])
+        } else {
+            None
+        }
+    }
+
+    /// Get a mutable reference to the value at the given layer and index, without checking the
+    /// bounds of the map.
+    ///
+    /// # Safety
+    ///
+    /// This function will panic if `index` is outside the map.
+    pub unsafe fn get_mut_unchecked(&mut self, layer: L, index: Vector2<usize>) -> &mut T {
+        &mut self[(layer, index)]
     }
 
     /// Returns an iterator over each cell in all layers of the map.
@@ -151,5 +199,34 @@ where
 
     fn index(&self, index: L) -> &Self::Output {
         &self.data[index.to_index()]
+    }
+}
+
+impl<L, T> IndexMut<L> for CellMap<L, T>
+where
+    L: Layer,
+{
+    fn index_mut(&mut self, index: L) -> &mut Self::Output {
+        &mut self.data[index.to_index()]
+    }
+}
+
+impl<L, T> Index<(L, Vector2<usize>)> for CellMap<L, T>
+where
+    L: Layer,
+{
+    type Output = T;
+
+    fn index(&self, index: (L, Vector2<usize>)) -> &Self::Output {
+        &self[index.0][(index.1.y, index.1.x)]
+    }
+}
+
+impl<L, T> IndexMut<(L, Vector2<usize>)> for CellMap<L, T>
+where
+    L: Layer,
+{
+    fn index_mut(&mut self, index: (L, Vector2<usize>)) -> &mut Self::Output {
+        &mut self[index.0][(index.1.y, index.1.x)]
     }
 }

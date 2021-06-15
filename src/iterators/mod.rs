@@ -1,5 +1,44 @@
 //! Provides iterators over [`CellMap`]s.
 //!
+//! Iterators are constructed using the `iter` family of functions on [`CellMap`], such as
+//! [`CellMap::iter()`] and [`CellMap::window_iter_mut()`]. Which function you use determines
+//! which [`Slicer`] the iterator uses, in other words what order and shape the iterated items will
+//! be produced in.
+//!
+//! Once constructed both [`CellMapIter`] and [`CellMapIterMut`] provide functions to modify the
+//! which layers are produced, and whether or not the items also produce their indexes. These can
+//! be used like iterator combinators.
+//!
+//! # Examples
+//!
+//! Iterate over a 3x3 window of items in the `Height` layer, while also returning the indices
+//! of the central cell of the window:
+//!
+//! ```
+//! # use cell_map::{CellMap, CellMapParams, Layer};
+//! # use nalgebra::Vector2;
+//! # #[derive(Layer, Clone, Debug)]
+//! # enum MyLayer {
+//! #     Height,
+//! #     Gradient,
+//! #     Roughness
+//! # }
+//! #
+//! # // Creates a new 5x5 map where each cell is 1.0 units wide, which is centred on (0, 0), with
+//! # // all elements initialised to 1.0.
+//! # let mut map = CellMap::<MyLayer, f64>::new_from_elem(
+//! #     CellMapParams {
+//! #         cell_size: Vector2::new(1.0, 1.0),
+//! #         num_cells: Vector2::new(5, 5),
+//! #         centre: Vector2::new(0.0, 0.0),
+//! #     },
+//! #     1.0,
+//! # );
+//! for ((layer, index), height) in map.window_iter(Vector2::new(1, 1)).unwrap().indexed() {
+//!     println!("[{:?}, {}, {}] = {}", layer, index.x, index.y, height);
+//! }
+//! ```
+//!
 //! [`CellMap`]: crate::CellMap
 
 // ------------------------------------------------------------------------------------------------

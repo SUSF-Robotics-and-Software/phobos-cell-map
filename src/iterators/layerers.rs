@@ -1,5 +1,5 @@
 //! Provides layerer types which are used in combination with [`Slicer`] types to determine the
-//! order and form in which data is produced from the layers within a [`CellMap`]
+//! order and form in which data is produced from the layers within a [`CellMap`].
 //!
 //! [`CellMap`]: crate::CellMap
 //! [`Slicer`]: crate::iterators::slicers::Slicer
@@ -41,7 +41,7 @@ where
     pub(crate) layer: L,
 }
 
-/// Produces data from `N` layers in a [`CellMap`]
+/// Produces data from many layers in a [`CellMap`]
 ///
 /// The data is produced in [`Layer::to_index()`] order.
 ///
