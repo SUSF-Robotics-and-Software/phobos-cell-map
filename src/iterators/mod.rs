@@ -67,7 +67,9 @@ use self::indexed::Indexed;
 // STRUCTS
 // ------------------------------------------------------------------------------------------------
 
-/// A non-mutable iterator over a [`CellMap`], see [`Slicer`] and [`layerers`] for more information.
+/// A non-mutable iterator over a [`CellMap`], see [`Slicer`] and [`layerers`] for more
+/// information.
+#[derive(Debug, Clone, Copy)]
 pub struct CellMapIter<'m, L, T, R, S>
 where
     L: Layer,
@@ -80,6 +82,7 @@ where
 }
 
 /// A mutable iterator over a [`CellMap`], see [`Slicer`] and [`layerers`] for more information.
+#[derive(Debug)]
 pub struct CellMapIterMut<'m, L, T, R, S>
 where
     L: Layer,

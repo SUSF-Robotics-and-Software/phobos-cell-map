@@ -62,6 +62,7 @@ pub(crate) type RectBounds = Vector2<(usize, usize)>;
 
 /// A [`Slicer`] which produces cells in `(x, y)` order inside a layer, with `x` increasing most
 /// rapidly.
+#[derive(Debug, Clone, Copy)]
 pub struct Cells {
     bounds: RectBounds,
     index: Vector2<usize>,
@@ -70,6 +71,7 @@ pub struct Cells {
 /// A [`Slicer`] which produces rectangular views into a layer in `(x, y)` order, increasing `x`
 /// most rapidly. A boundary of the `semi_width` of the window around the outside edge of the map
 /// is used to prevent indexing outside the map.
+#[derive(Debug, Clone, Copy)]
 pub struct Windows {
     bounds: RectBounds,
     index: Vector2<usize>,

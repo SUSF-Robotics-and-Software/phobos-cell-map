@@ -11,7 +11,7 @@ use nalgebra::Vector2;
 /// Standard error type for errors related to [`CellMap`]s.
 ///
 /// [`CellMap`]: crate::CellMap
-#[derive(Debug, thiserror::Error)]
+#[derive(Clone, Copy, Debug, thiserror::Error)]
 pub enum CellMapError {
     /// Error returned when trying to construct a [`Windows`] slicer using a `semi_width` which
     /// would create a window larger than the size of the map.

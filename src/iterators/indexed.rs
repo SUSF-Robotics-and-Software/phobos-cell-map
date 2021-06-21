@@ -17,6 +17,7 @@ use crate::{iterators::Slicer, Layer};
 
 /// A [`Slicer`] which wrapps another [`Slicer`] and modifies it to produce the index of the item
 /// as well as the item itself.
+#[derive(Debug, Clone, Copy)]
 pub struct Indexed<'a, L, T, S>
 where
     L: Layer,
@@ -75,9 +76,8 @@ where
     }
 
     fn reset(&mut self, layer: Option<L>) {
-        match layer {
-            Some(ref l) => self.layer = l.clone(),
-            None => (),
+        if let Some(ref l) = layer {
+            self.layer = l.clone()
         }
 
         self.slicer.reset(layer)

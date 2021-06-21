@@ -46,7 +46,7 @@ where
 }
 
 /// Contains parameters required to construct a [`CellMap`]
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Default)]
 pub struct CellMapParams {
     /// The size (resolution) of each cell in the map, in both the `x` and `y` directions.
     pub cell_size: Vector2<f64>,
@@ -68,12 +68,12 @@ where
 {
     /// Returns the size of the cells in the map.
     pub fn cell_size(&self) -> Vector2<f64> {
-        self.params.cell_size.clone()
+        self.params.cell_size
     }
 
     /// Returns the number of cells in each direction of the map.
     pub fn num_cells(&self) -> Vector2<usize> {
-        self.params.num_cells.clone()
+        self.params.num_cells
     }
 
     /// Returns whether or not the given index is inside the map.

@@ -115,6 +115,8 @@
 //! ```
 
 #![warn(missing_docs)]
+#![warn(missing_copy_implementations)]
+#![warn(missing_debug_implementations)]
 
 // ------------------------------------------------------------------------------------------------
 // MODULES

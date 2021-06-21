@@ -34,6 +34,7 @@ where
 /// Produces data from a single layer in a [`CellMap`].
 ///
 /// [`CellMap`]: crate::CellMap
+#[derive(Debug, Clone, Copy)]
 pub struct Single<L>
 where
     L: Layer,
@@ -46,7 +47,7 @@ where
 /// The data is produced in [`Layer::to_index()`] order.
 ///
 /// [`CellMap`]: crate::CellMap
-
+#[derive(Debug, Clone)]
 pub struct Many<L>
 where
     L: Layer,
@@ -56,6 +57,7 @@ where
 
 /// Produces data from two layers in pairs of `(&from, &mut to)`, allowing you to map data from one
 /// layer into another.
+#[derive(Debug, Clone, Copy)]
 pub struct Map<L>
 where
     L: Layer,
@@ -82,7 +84,7 @@ where
     L: Layer,
 {
     fn current(&self) -> Option<L> {
-        self.layers.front().map(|l| l.clone())
+        self.layers.front().cloned()
     }
 }
 
