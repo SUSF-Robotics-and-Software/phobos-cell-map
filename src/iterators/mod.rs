@@ -246,12 +246,13 @@ where
 
     /// Converts this iterator to also produce the position of the iterated item as well as its
     /// value.
-    pub fn positioned(self) -> CellMapIter<'m, L, T, R, Positioned<'m, L, T, S>> {
+    pub fn positioned(self) -> CellMapIterMut<'m, L, T, R, Positioned<'m, L, T, S>> {
         let current_layer = self.layerer.current().unwrap();
-        CellMapIter {
+        let to_parent = self.map.to_parent();
+        CellMapIterMut {
             map: self.map,
             layerer: self.layerer,
-            slicer: Positioned::new(self.slicer, current_layer, self.map.to_parent()),
+            slicer: Positioned::new(self.slicer, current_layer, to_parent),
         }
     }
 }
