@@ -6,7 +6,7 @@
 // IMPORTS
 // ------------------------------------------------------------------------------------------------
 
-use nalgebra::{Point2, Vector2};
+use nalgebra::{Affine2, Point2, Vector2};
 
 use crate::iterators::slicers::RectBounds;
 
@@ -26,6 +26,11 @@ pub(crate) trait Point2Ext {
     fn as_array2_index(&self) -> [usize; 2];
 }
 
+/// Provides extension traits to [`ndarray::Affine2<T>`]
+pub(crate) trait Affine2Ext {
+    fn position(&self, index: Point2<usize>) -> Point2<f64>;
+}
+
 // ------------------------------------------------------------------------------------------------
 // IMPLS
 // ------------------------------------------------------------------------------------------------
@@ -43,5 +48,13 @@ impl Point2Ext for Point2<usize> {
 
     fn as_array2_index(&self) -> [usize; 2] {
         [self.y, self.x]
+    }
+}
+
+impl Affine2Ext for Affine2<f64> {
+    fn position(&self, index: Point2<usize>) -> Point2<f64> {
+        // Get the centre of the cell, which is + 0.5 cells in the x and y direction.
+        let index_centre = index.cast() + Vector2::new(0.5, 0.5);
+        self.transform_point(&index_centre)
     }
 }

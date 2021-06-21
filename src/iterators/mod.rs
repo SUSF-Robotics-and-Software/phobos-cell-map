@@ -47,6 +47,7 @@
 
 pub mod indexed;
 pub mod layerers;
+pub mod positioned;
 pub mod slicers;
 #[cfg(test)]
 mod tests;
@@ -61,7 +62,7 @@ use slicers::*;
 
 use crate::{CellMap, CellMapError, Layer};
 
-use self::indexed::Indexed;
+use self::{indexed::Indexed, positioned::Positioned};
 
 // ------------------------------------------------------------------------------------------------
 // STRUCTS
@@ -156,6 +157,17 @@ where
             slicer: Indexed::new(self.slicer, current_layer),
         }
     }
+
+    /// Converts this iterator to also produce the position of the iterated item as well as its
+    /// value.
+    pub fn positioned(self) -> CellMapIter<'m, L, T, R, Positioned<'m, L, T, S>> {
+        let current_layer = self.layerer.current().unwrap();
+        CellMapIter {
+            map: self.map,
+            layerer: self.layerer,
+            slicer: Positioned::new(self.slicer, current_layer, self.map.to_parent()),
+        }
+    }
 }
 
 impl<'m, L, T, R, S> CellMapIterMut<'m, L, T, R, S>
@@ -229,6 +241,17 @@ where
             map: self.map,
             layerer: self.layerer,
             slicer: Indexed::new(self.slicer, current_layer),
+        }
+    }
+
+    /// Converts this iterator to also produce the position of the iterated item as well as its
+    /// value.
+    pub fn positioned(self) -> CellMapIter<'m, L, T, R, Positioned<'m, L, T, S>> {
+        let current_layer = self.layerer.current().unwrap();
+        CellMapIter {
+            map: self.map,
+            layerer: self.layerer,
+            slicer: Positioned::new(self.slicer, current_layer, self.map.to_parent()),
         }
     }
 }
