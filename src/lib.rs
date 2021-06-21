@@ -50,7 +50,7 @@
 //!     CellMapParams {
 //!         cell_size: Vector2::new(1.0, 1.0),
 //!         num_cells: Vector2::new(5, 5),
-//!         centre: Vector2::new(0.0, 0.0),
+//!         ..Default::default()
 //!     },
 //!     1.0,
 //! );
@@ -85,7 +85,7 @@
 //! #     CellMapParams {
 //! #         cell_size: Vector2::new(1.0, 1.0),
 //! #         num_cells: Vector2::new(5, 5),
-//! #         centre: Vector2::new(0.0, 0.0),
+//! #         ..Default::default()
 //! #     },
 //! #     1.0,
 //! # );
@@ -122,11 +122,16 @@
 // MODULES
 // ------------------------------------------------------------------------------------------------
 
+#[macro_use]
+mod macros;
+
 mod cell_map;
 pub mod error;
 pub(crate) mod extensions;
 pub mod iterators;
 mod layer;
+#[cfg(test)]
+mod tests;
 
 // ------------------------------------------------------------------------------------------------
 // EXPORTS
@@ -142,7 +147,8 @@ pub use layer::Layer;
 // ------------------------------------------------------------------------------------------------
 
 #[cfg(test)]
-mod test_utils {
+#[macro_use]
+pub(crate) mod test_utils {
     use crate::Layer;
 
     #[derive(Clone, Copy, Debug)]

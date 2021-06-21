@@ -6,7 +6,7 @@
 // IMPORTS
 // ------------------------------------------------------------------------------------------------
 
-use nalgebra::Vector2;
+use nalgebra::{Point2, Vector2};
 
 use crate::iterators::slicers::RectBounds;
 
@@ -19,8 +19,8 @@ pub(crate) trait ToShape {
     fn to_shape(&self) -> (usize, usize);
 }
 
-/// Provides extension traits to an [`ndarray::Vector2`].
-pub(crate) trait Vector2Ext {
+/// Provides extension traits to an [`ndarray::Point2`].
+pub(crate) trait Point2Ext {
     fn in_bounds(&self, bounds: &RectBounds) -> bool;
 
     fn as_array2_index(&self) -> [usize; 2];
@@ -36,7 +36,7 @@ impl ToShape for Vector2<usize> {
     }
 }
 
-impl Vector2Ext for Vector2<usize> {
+impl Point2Ext for Point2<usize> {
     fn in_bounds(&self, bounds: &RectBounds) -> bool {
         self.x >= bounds.x.0 && self.x < bounds.x.1 && self.y >= bounds.y.0 && self.y < bounds.y.1
     }

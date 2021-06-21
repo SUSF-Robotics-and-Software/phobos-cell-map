@@ -7,7 +7,7 @@
 
 use std::marker::PhantomData;
 
-use nalgebra::Vector2;
+use nalgebra::Point2;
 
 use crate::{iterators::Slicer, Layer};
 
@@ -51,9 +51,9 @@ where
     L: Layer,
     S: Slicer<'a, L, T>,
 {
-    type Output = ((L, Vector2<usize>), S::Output);
+    type Output = ((L, Point2<usize>), S::Output);
 
-    type OutputMut = ((L, Vector2<usize>), S::OutputMut);
+    type OutputMut = ((L, Point2<usize>), S::OutputMut);
 
     fn slice(&self, data: &'a ndarray::Array2<T>) -> Option<Self::Output> {
         let item = self.slicer.slice(data)?;
@@ -71,7 +71,7 @@ where
         self.slicer.advance()
     }
 
-    fn index(&self) -> Option<nalgebra::Vector2<usize>> {
+    fn index(&self) -> Option<nalgebra::Point2<usize>> {
         self.slicer.index()
     }
 

@@ -7,10 +7,10 @@
 // IMPORTS
 // ------------------------------------------------------------------------------------------------
 
-use nalgebra::Vector2;
+use nalgebra::{Point2, Vector2};
 use ndarray::{s, Array2, ArrayView2, ArrayViewMut2};
 
-use crate::{extensions::Vector2Ext, CellMap, CellMapError, Layer};
+use crate::{extensions::Point2Ext, CellMap, CellMapError, Layer};
 
 // ------------------------------------------------------------------------------------------------
 // TRAITS
@@ -50,7 +50,7 @@ where
 
     /// Return the current index of the [`Slicer`], or `None` if the slicer has reached the end of
     /// its data.
-    fn index(&self) -> Option<Vector2<usize>>;
+    fn index(&self) -> Option<Point2<usize>>;
 
     /// Resets the index of this [`Slicer`] so that it can be used on the next layer in the
     /// iteration. The `layer` input is used for slicers which need to monitor which layer they are
@@ -65,7 +65,7 @@ pub(crate) type RectBounds = Vector2<(usize, usize)>;
 #[derive(Debug, Clone, Copy)]
 pub struct Cells {
     bounds: RectBounds,
-    index: Vector2<usize>,
+    index: Point2<usize>,
 }
 
 /// A [`Slicer`] which produces rectangular views into a layer in `(x, y)` order, increasing `x`
@@ -74,7 +74,7 @@ pub struct Cells {
 #[derive(Debug, Clone, Copy)]
 pub struct Windows {
     bounds: RectBounds,
-    index: Vector2<usize>,
+    index: Point2<usize>,
     semi_width: Vector2<usize>,
 }
 
@@ -83,7 +83,7 @@ impl Cells {
         let cells = map.num_cells();
         Self {
             bounds: Vector2::new((0, cells.x), (0, cells.y)),
-            index: Vector2::new(0, 0),
+            index: Point2::new(0, 0),
         }
     }
 }
@@ -113,7 +113,7 @@ where
         }
     }
 
-    fn index(&self) -> Option<Vector2<usize>> {
+    fn index(&self) -> Option<Point2<usize>> {
         if self.index.in_bounds(&self.bounds) {
             Some(self.index)
         } else {
@@ -122,7 +122,7 @@ where
     }
 
     fn reset(&mut self, _layer: Option<L>) {
-        self.index = Vector2::new(self.bounds.x.0, self.bounds.y.0);
+        self.index = Point2::new(self.bounds.x.0, self.bounds.y.0);
     }
 }
 
@@ -146,7 +146,7 @@ impl Windows {
 
             Ok(Self {
                 bounds,
-                index: Vector2::new(bounds.x.0, bounds.y.0),
+                index: Point2::new(bounds.x.0, bounds.y.0),
                 semi_width,
             })
         }
@@ -194,7 +194,7 @@ where
         }
     }
 
-    fn index(&self) -> Option<Vector2<usize>> {
+    fn index(&self) -> Option<Point2<usize>> {
         if self.index.in_bounds(&self.bounds) {
             Some(self.index)
         } else {
@@ -203,6 +203,6 @@ where
     }
 
     fn reset(&mut self, _layer: Option<L>) {
-        self.index = Vector2::new(self.bounds.x.0, self.bounds.y.0);
+        self.index = Point2::new(self.bounds.x.0, self.bounds.y.0);
     }
 }
