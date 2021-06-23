@@ -17,11 +17,13 @@ path = "src/lib.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
+# Feature enabling `from_json` and `to_json` functionality.
+json = ["serde_json"]
 # Debugging feature which will create `_debug_x_report.json` files to visualise iterators.
-debug_iters = ["serde_json"]
+debug_iters = ["json"]
 # Debugging feature which will create `_debug_x_map.json` files to visualise
 # maps from tests.
-debug_maps = ["serde_json"]
+debug_maps = ["json"]
 
 [dependencies]
 ndarray = { version = "0.15", features = ["serde"] }
