@@ -57,7 +57,7 @@ mod tests;
 // ------------------------------------------------------------------------------------------------
 
 use layerers::*;
-use nalgebra::Vector2;
+use nalgebra::{Point2, Vector2};
 use slicers::*;
 
 use crate::{CellMap, CellMapError, Layer};
@@ -125,6 +125,20 @@ where
                 layers: L::all().into(),
             },
             slicer: Windows::from_map(map, semi_width)?,
+        })
+    }
+
+    pub(crate) fn new_line(
+        map: &'m CellMap<L, T>,
+        start_position: Point2<f64>,
+        end_position: Point2<f64>,
+    ) -> Result<CellMapIter<'m, L, T, Many<L>, Line>, CellMapError> {
+        Ok(CellMapIter {
+            map,
+            layerer: Many {
+                layers: L::all().into(),
+            },
+            slicer: Line::from_map::<L, T>(map.metadata, start_position, end_position)?,
         })
     }
 
@@ -202,6 +216,21 @@ where
                 layers: L::all().into(),
             },
             slicer,
+        })
+    }
+
+    pub(crate) fn new_line(
+        map: &'m mut CellMap<L, T>,
+        start_position: Point2<f64>,
+        end_position: Point2<f64>,
+    ) -> Result<CellMapIterMut<'m, L, T, Many<L>, Line>, CellMapError> {
+        let metadata = map.metadata;
+        Ok(CellMapIterMut {
+            map,
+            layerer: Many {
+                layers: L::all().into(),
+            },
+            slicer: Line::from_map::<L, T>(metadata, start_position, end_position)?,
         })
     }
 

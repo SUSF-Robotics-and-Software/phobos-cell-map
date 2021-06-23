@@ -125,11 +125,12 @@
 #[macro_use]
 mod macros;
 
-mod cell_map;
+pub(crate) mod cell_map;
 pub mod error;
 pub(crate) mod extensions;
 pub mod iterators;
 mod layer;
+mod map_metadata;
 #[cfg(test)]
 mod tests;
 
@@ -149,7 +150,11 @@ pub use layer::Layer;
 #[cfg(test)]
 #[macro_use]
 pub(crate) mod test_utils {
-    use crate::Layer;
+    use std::fs::OpenOptions;
+
+    use serde::Serialize;
+
+    use crate::{CellMap, Layer};
 
     #[derive(Clone, Copy, Debug)]
     #[allow(dead_code)]
@@ -187,6 +192,24 @@ pub(crate) mod test_utils {
 
         fn all() -> Vec<Self> {
             vec![Self::Layer0, Self::Layer1, Self::Layer2]
+        }
+    }
+
+    /// Writes the given map to the given location, prepending "_debug_" to the name.
+    pub fn write_debug_map<L: Layer, T: Serialize>(map: &CellMap<L, T>, name: &str) {
+        #[cfg(feature = "debug_maps")]
+        {
+            let file_name = &format!("_debug_{}_map.json", name);
+            serde_json::to_writer_pretty(
+                OpenOptions::new()
+                    .create(true)
+                    .append(false)
+                    .write(true)
+                    .open(file_name)
+                    .unwrap_or_else(|e| panic!("Could not create file {}: {}", file_name, e)),
+                &map,
+            )
+            .unwrap_or_else(|e| panic!("Could not write debug map {}: {}", file_name, e))
         }
     }
 }

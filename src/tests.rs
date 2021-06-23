@@ -4,10 +4,10 @@
 // IMPORTS
 // ------------------------------------------------------------------------------------------------
 
-use nalgebra::{Point2, Translation2, UnitComplex, Vector2};
+use nalgebra::{Point2, Vector2};
 
 use super::*;
-use crate::test_utils::TestLayers;
+use crate::test_utils::{write_debug_map, TestLayers};
 
 // ------------------------------------------------------------------------------------------------
 // TESTS
@@ -73,9 +73,11 @@ fn get_cell_positions() {
     let map = CellMap::<TestLayers, f64>::new(CellMapParams {
         num_cells: Vector2::new(10, 10),
         cell_size: Vector2::new(0.1, 0.1),
-        to_parent_translation: Translation2::new(0.5, 0.5),
+        from_parent_translation: Vector2::new(0.5, 0.5),
         ..Default::default()
     });
+
+    write_debug_map(&map, "scaled_translated");
 
     // Check positions
     assert_f64_iter_eq!(
@@ -102,8 +104,8 @@ fn get_cell_positions() {
     let map = CellMap::<TestLayers, f64>::new(CellMapParams {
         num_cells: Vector2::new(10, 10),
         cell_size: Vector2::new(0.1, 0.1),
-        to_parent_translation: Translation2::new(0.5, 0.5),
-        to_parent_rotation: UnitComplex::from_angle(std::f64::consts::FRAC_PI_2),
+        from_parent_translation: Vector2::new(0.5, 0.5),
+        from_parent_angle_rad: std::f64::consts::FRAC_PI_2,
         ..Default::default()
     });
 

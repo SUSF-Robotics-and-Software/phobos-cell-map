@@ -68,3 +68,48 @@ fn counts() -> Result<(), CellMapError> {
 
     Ok(())
 }
+
+#[test]
+fn line() -> Result<(), CellMapError> {
+    // Dummy map
+    let map = CellMap::<TestLayers, f64>::new_from_elem(
+        CellMapParams {
+            cell_size: Vector2::new(1.0, 1.0),
+            num_cells: Vector2::new(5, 5),
+            ..Default::default()
+        },
+        1.0,
+    );
+
+    // Create new line iterator between two points which should be a straight line
+    let indexes: Vec<(usize, usize)> = map
+        .line_iter(Point2::new(1.1, 1.1), Point2::new(3.3, 1.1))?
+        .layer(TestLayers::Layer0)
+        .indexed()
+        .map(|((_, i), _)| (i.x, i.y))
+        .collect();
+
+    assert_eq!(indexes, vec![(1, 1), (2, 1), (3, 1)]);
+
+    // Create a off diaganal iterator, should produce more points
+    let indexes: Vec<(usize, usize)> = map
+        .line_iter(Point2::new(1.1, 1.1), Point2::new(4.3, 2.1))?
+        .layer(TestLayers::Layer0)
+        .indexed()
+        .map(|((_, i), _)| (i.x, i.y))
+        .collect();
+
+    assert_eq!(indexes, vec![(1, 1), (2, 1), (3, 1), (3, 2), (4, 2)]);
+
+    // Create negative direction vector
+    let indexes: Vec<(usize, usize)> = map
+        .line_iter(Point2::new(4.3, 2.1), Point2::new(1.1, 1.1))?
+        .layer(TestLayers::Layer0)
+        .indexed()
+        .map(|((_, i), _)| (i.x, i.y))
+        .collect();
+
+    assert_eq!(indexes, vec![(4, 2), (3, 2), (3, 1), (2, 1), (1, 1)]);
+
+    Ok(())
+}
