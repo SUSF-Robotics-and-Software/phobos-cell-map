@@ -12,9 +12,10 @@ use std::{
 
 use nalgebra::{Affine2, Point2, Vector2};
 use ndarray::Array2;
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use crate::{
+    cell_map_file::CellMapFile,
     extensions::ToShape,
     iterators::{
         layerers::Many,
@@ -30,7 +31,7 @@ use crate::{
 // ------------------------------------------------------------------------------------------------
 
 /// Provides a many-layer 2D map of cellular data.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct CellMap<L, T>
 where
     L: Layer,
@@ -44,6 +45,9 @@ where
 
     /// Metadata associated with this map.
     pub(crate) metadata: CellMapMetadata,
+
+    /// The original parameters supplied to `CellMap::new()`.
+    pub(crate) params: CellMapParams,
 
     layer_type: PhantomData<L>,
 }
@@ -107,6 +111,34 @@ impl<L, T> CellMap<L, T>
 where
     L: Layer,
 {
+    /// Creates a new map from the given data.
+    ///
+    /// If data is the wrong shape or has the wrong number of layers this function will return an
+    /// error.
+    pub fn new_from_data(
+        params: CellMapParams,
+        data: Vec<Array2<T>>,
+    ) -> Result<Self, CellMapError> {
+        if data.len() != L::NUM_LAYERS {
+            return Err(CellMapError::WrongNumberOfLayers(L::NUM_LAYERS, data.len()));
+        }
+
+        if !data.is_empty() {
+            let layer_cells = Vector2::new(data[0].shape()[0], data[0].shape()[1]);
+
+            if layer_cells != params.num_cells {
+                return Err(CellMapError::LayerWrongShape(layer_cells, params.num_cells));
+            }
+        }
+
+        Ok(Self {
+            data,
+            metadata: params.into(),
+            params,
+            layer_type: PhantomData,
+        })
+    }
+
     /// Returns the size of the cells in the map.
     pub fn cell_size(&self) -> Vector2<f64> {
         self.metadata.cell_size
@@ -262,6 +294,40 @@ where
 
 impl<L, T> CellMap<L, T>
 where
+    L: Layer + Serialize,
+    T: Clone + Serialize,
+{
+    /// Builds a new [`CellMapFile`] from the given map, which can be serialised or deserialised
+    /// using serde.
+    pub fn to_cell_map_file(&self) -> CellMapFile<L, T> {
+        CellMapFile::new(self)
+    }
+
+    /// Writes the map to the given path as a JSON file.
+    #[cfg(feature = "json")]
+    pub fn write_json<P: AsRef<std::path::Path>>(&self, path: P) -> Result<(), CellMapError> {
+        let map_file = CellMapFile::new(&self);
+        map_file
+            .write_json(path)
+            .map_err(|e| CellMapError::WriteError(e))
+    }
+}
+
+impl<L, T> CellMap<L, T>
+where
+    L: Layer + DeserializeOwned,
+    T: DeserializeOwned,
+{
+    /// Loads a map stored in JSON format at the given path.
+    #[cfg(feature = "json")]
+    pub fn from_json<P: AsRef<std::path::Path>>(path: P) -> Result<Self, CellMapError> {
+        let map_file = CellMapFile::from_json(path).map_err(|e| CellMapError::LoadError(e))?;
+        map_file.into_cell_map()
+    }
+}
+
+impl<L, T> CellMap<L, T>
+where
     L: Layer,
     T: Clone,
 {
@@ -272,6 +338,7 @@ where
         Self {
             data,
             metadata: params.into(),
+            params,
             layer_type: PhantomData,
         }
     }
@@ -290,6 +357,7 @@ where
         Self {
             data,
             metadata: params.into(),
+            params,
             layer_type: PhantomData,
         }
     }

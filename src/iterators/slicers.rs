@@ -7,11 +7,6 @@
 // IMPORTS
 // ------------------------------------------------------------------------------------------------
 
-use std::{
-    fs::{File, OpenOptions},
-    sync::Arc,
-};
-
 use nalgebra::{Point2, Vector2};
 use ndarray::{s, Array2, ArrayView2, ArrayViewMut2};
 use serde::Serialize;
@@ -91,6 +86,7 @@ pub struct Windows {
 /// [here](https://theshoemaker.de/2016/02/ray-casting-in-2d-grids/), meaning that all cells the
 /// line intersects will be yielded only once.
 #[derive(Debug, Clone)]
+#[allow(missing_copy_implementations)]
 pub struct Line {
     bounds: RectBounds,
     map_meta: CellMapMetadata,
@@ -108,7 +104,7 @@ pub struct Line {
     end_index: Point2<usize>,
 
     #[cfg(feature = "debug_iters")]
-    step_report_file: Arc<File>,
+    step_report_file: std::sync::Arc<std::fs::File>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize)]
@@ -319,8 +315,8 @@ impl Line {
             current_map: Some(start_map),
             end_index: end_cell,
             #[cfg(feature = "debug_iters")]
-            step_report_file: Arc::new(
-                OpenOptions::new()
+            step_report_file: std::sync::Arc::new(
+                std::fs::OpenOptions::new()
                     .create(true)
                     .truncate(true)
                     .write(true)
@@ -408,7 +404,7 @@ where
             let val = serde_json::to_string_pretty(&rpt).unwrap();
 
             writeln!(
-                Arc::<File>::get_mut(&mut self.step_report_file).unwrap(),
+                std::sync::Arc::<std::fs::File>::get_mut(&mut self.step_report_file).unwrap(),
                 "{},",
                 val
             )

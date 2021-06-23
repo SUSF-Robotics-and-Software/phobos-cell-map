@@ -126,6 +126,7 @@
 mod macros;
 
 pub(crate) mod cell_map;
+pub mod cell_map_file;
 pub mod error;
 pub(crate) mod extensions;
 pub mod iterators;
@@ -150,13 +151,12 @@ pub use layer::Layer;
 #[cfg(test)]
 #[macro_use]
 pub(crate) mod test_utils {
-    use std::fs::OpenOptions;
 
     use serde::Serialize;
 
     use crate::{CellMap, Layer};
 
-    #[derive(Clone, Copy, Debug)]
+    #[derive(Clone, Copy, Debug, Serialize)]
     #[allow(dead_code)]
     pub enum TestLayers {
         Layer0,
@@ -196,20 +196,15 @@ pub(crate) mod test_utils {
     }
 
     /// Writes the given map to the given location, prepending "_debug_" to the name.
-    pub fn write_debug_map<L: Layer, T: Serialize>(map: &CellMap<L, T>, name: &str) {
+    pub fn write_debug_map<L: Layer + Serialize, T: Serialize + Clone>(
+        map: &CellMap<L, T>,
+        name: &str,
+    ) {
         #[cfg(feature = "debug_maps")]
         {
             let file_name = &format!("_debug_{}_map.json", name);
-            serde_json::to_writer_pretty(
-                OpenOptions::new()
-                    .create(true)
-                    .append(false)
-                    .write(true)
-                    .open(file_name)
-                    .unwrap_or_else(|e| panic!("Could not create file {}: {}", file_name, e)),
-                &map,
-            )
-            .unwrap_or_else(|e| panic!("Could not write debug map {}: {}", file_name, e))
+            map.write_json(file_name)
+                .expect("Failed to write debug map!");
         }
     }
 }
