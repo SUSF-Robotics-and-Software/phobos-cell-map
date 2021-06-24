@@ -7,7 +7,7 @@
 use nalgebra::{Point2, Vector2};
 
 use super::*;
-use crate::test_utils::{write_debug_map, TestLayers};
+use crate::test_utils::TestLayers;
 
 // ------------------------------------------------------------------------------------------------
 // TESTS
@@ -73,11 +73,9 @@ fn get_cell_positions() {
     let map = CellMap::<TestLayers, f64>::new(CellMapParams {
         num_cells: Vector2::new(10, 10),
         cell_size: Vector2::new(0.1, 0.1),
-        from_parent_translation: Vector2::new(0.5, 0.5),
+        position_in_parent: Vector2::new(0.5, 0.5),
         ..Default::default()
     });
-
-    write_debug_map(&map, "scaled_translated");
 
     // Check positions
     assert_f64_iter_eq!(
@@ -104,29 +102,29 @@ fn get_cell_positions() {
     let map = CellMap::<TestLayers, f64>::new(CellMapParams {
         num_cells: Vector2::new(10, 10),
         cell_size: Vector2::new(0.1, 0.1),
-        from_parent_translation: Vector2::new(0.5, 0.5),
-        from_parent_angle_rad: std::f64::consts::FRAC_PI_2,
+        position_in_parent: Vector2::new(0.5, 0.5),
+        rotation_in_parent_rad: std::f64::consts::FRAC_PI_4,
         ..Default::default()
     });
+
+    #[cfg(feature = "debug_maps")]
+    crate::write_debug_map(&map, "trs");
 
     // Check positions
     assert_f64_iter_eq!(
         map.position(Point2::new(0, 0)).unwrap(),
-        Point2::new(0.45, 0.55)
+        Point2::new(0.5, 0.5707106781186547)
     );
     assert_f64_iter_eq!(
         map.position(Point2::new(5, 5)).unwrap(),
-        Point2::new(-0.05, 1.05)
+        Point2::new(0.5, 1.2778174593052023)
     );
 
     // Check indexes
-    assert_eq!(map.index(Point2::new(0.4, 0.7)).unwrap(), Point2::new(2, 1));
+    assert_eq!(map.index(Point2::new(0.4, 0.7)).unwrap(), Point2::new(0, 2));
+    assert_eq!(map.index(Point2::new(1.0, 1.2)).unwrap(), Point2::new(8, 1));
     assert_eq!(
-        map.index(Point2::new(-0.23, 0.76)).unwrap(),
-        Point2::new(2, 7)
-    );
-    assert_eq!(
-        map.index(Point2::new(-0.23, 0.9)).unwrap(),
-        Point2::new(4, 7)
+        map.index(Point2::new(-0.1, 1.2)).unwrap(),
+        Point2::new(0, 9)
     );
 }

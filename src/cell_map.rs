@@ -69,20 +69,19 @@ pub struct CellMapParams {
     /// The default value is `[0, 0]`.
     pub num_cells: Vector2<usize>,
 
-    /// The rotation angle in radians that rotates from the parent frame to the map frame.
+    /// The rotation of the map's Z axis about the parent Z axis in radians.
     ///
     /// # Default
     ///
     /// The default value is `0.0`.
-    pub from_parent_angle_rad: f64,
+    pub rotation_in_parent_rad: f64,
 
-    /// The translation that will go from the parent frame to the map frame, in parent frame
-    /// coordinates.
+    /// The position of the origin of the map in the parent frame, in parent frame units.
     ///
     /// # Default
     ///
     /// The default value is `[0.0, 0.0]`.
-    pub from_parent_translation: Vector2<f64>,
+    pub position_in_parent: Vector2<f64>,
 
     /// The precision to use when determining cell boundaries.
     ///
@@ -409,8 +408,8 @@ impl Default for CellMapParams {
             cell_size: Vector2::new(1.0, 1.0),
             num_cells: Vector2::zeros(),
             cell_boundary_precision: 1e-10,
-            from_parent_angle_rad: 0.0,
-            from_parent_translation: Vector2::zeros(),
+            rotation_in_parent_rad: 0.0,
+            position_in_parent: Vector2::zeros(),
         }
     }
 }

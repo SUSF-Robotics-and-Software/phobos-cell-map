@@ -64,8 +64,8 @@ where
         let params = CellMapParams {
             cell_size: self.cell_size,
             num_cells: self.num_cells,
-            from_parent_angle_rad: self.from_parent_angle_rad,
-            from_parent_translation: self.from_parent_translation,
+            rotation_in_parent_rad: self.from_parent_angle_rad,
+            position_in_parent: self.from_parent_translation,
             cell_boundary_precision: self.cell_boundary_precision,
         };
 
@@ -85,8 +85,8 @@ where
             num_cells: map.metadata.num_cells,
             cell_size: map.metadata.cell_size,
             cell_boundary_precision: map.metadata.cell_boundary_precision,
-            from_parent_angle_rad: map.params.from_parent_angle_rad,
-            from_parent_translation: map.params.from_parent_translation,
+            from_parent_angle_rad: map.params.rotation_in_parent_rad,
+            from_parent_translation: map.params.position_in_parent,
             from_parent_matrix: map.metadata.to_parent.inverse(),
             data: map.data.clone(),
         }

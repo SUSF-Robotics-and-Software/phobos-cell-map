@@ -11,9 +11,11 @@ class CellMap:
     layers: typing.List[str]
     cell_size: np.ndarray
     num_cells: np.ndarray
+    extents: np.ndarray
     cell_boundary_precision: float
     from_parent: np.ndarray
     to_parent: np.ndarray
+
 
     @staticmethod
     def load(path):
@@ -34,9 +36,18 @@ class CellMap:
         cm.cell_boundary_precision = np.array(raw['cell_boundary_precision'])
         cm.from_parent = np.array(raw['from_parent_matrix']).reshape((3, 3))
         cm.to_parent = np.linalg.inv(cm.from_parent)
-        cm.data = dict()
+
+        # Calculate extents of map
+        extents = np.array([
+            [0.0, 0.0], 
+            [cm.num_cells[0], 0.0],
+            [0.0, cm.num_cells[1]], 
+            [cm.num_cells[0], cm.num_cells[1]], 
+        ])
+        cm.extents = cm.transform_to_parent(extents)
 
         # Load each layer in turn, reshaping as needed
+        cm.data = dict()
         for layer, data in zip(cm.layers, raw['data']):
             if data['dim'][0] != cm.num_cells[0] or data['dim'][1] != cm.num_cells[1]:
                 raise RuntimeError('Data in cell map file is of wrong shape')
@@ -44,4 +55,15 @@ class CellMap:
 
         return cm
 
+    def transform_to_parent(self, points: np.ndarray):
+        '''
+        Converts the given point(s) from the map frame to the parent frame.
 
+        Points should be an (N, 2) dimension array.
+        '''
+        n = np.shape(points)[0]
+        dehomog = lambda x: x[:-1]/x[-1]
+        homog = np.ones((n, 3))
+        homog[:,:-1] = points
+        homog = homog @ self.to_parent
+        return np.array([dehomog(x) for x in homog])

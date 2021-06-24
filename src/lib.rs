@@ -148,6 +148,22 @@ pub use layer::Layer;
 // USEFUL TEST UTILITIES
 // ------------------------------------------------------------------------------------------------
 
+#[cfg(feature = "debug_maps")]
+use serde::Serialize;
+
+/// Writes the given map to the given location, prepending "_debug_" to the name.
+#[cfg(feature = "debug_maps")]
+pub fn write_debug_map<L: Layer + Serialize, T: Serialize + Clone>(
+    map: &CellMap<L, T>,
+    name: &str,
+) {
+    #[cfg(feature = "debug_maps")]
+    {
+        let file_name = &format!("_debug_{}_map.json", name);
+        map.write_json(file_name)
+            .expect("Failed to write debug map!");
+    }
+}
 #[cfg(test)]
 #[macro_use]
 pub(crate) mod test_utils {
@@ -192,19 +208,6 @@ pub(crate) mod test_utils {
 
         fn all() -> Vec<Self> {
             vec![Self::Layer0, Self::Layer1, Self::Layer2]
-        }
-    }
-
-    /// Writes the given map to the given location, prepending "_debug_" to the name.
-    pub fn write_debug_map<L: Layer + Serialize, T: Serialize + Clone>(
-        map: &CellMap<L, T>,
-        name: &str,
-    ) {
-        #[cfg(feature = "debug_maps")]
-        {
-            let file_name = &format!("_debug_{}_map.json", name);
-            map.write_json(file_name)
-                .expect("Failed to write debug map!");
         }
     }
 }
