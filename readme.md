@@ -1,6 +1,6 @@
 # `cell-map`: many-layer 2D cellular maps
 
-![crates.io](https://img.shields.io/crates/v/cell-map.svg?style=for-the-badge) ![docs.rs](https://img.shields.io/docsrs/cell-map?style=for-the-badge)
+[![Crates.io](https://img.shields.io/crates/v/cell-map?style=for-the-badge)](https://crates.io/crates/cell-map) [![docs.rs](https://img.shields.io/docsrs/cell-map?style=for-the-badge)](https://docs.rs/cell-map/)
 
 This crate provides the `CellMap` type, a 2D map with many layers comprised of
 cells that can store arbitrary data. It is based on
