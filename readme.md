@@ -1,5 +1,7 @@
 # `cell-map`: many-layer 2D cellular maps
 
+![crates.io](https://img.shields.io/crates/v/cell-map.svg?style=for-the-badge) ![docs.rs](https://img.shields.io/docsrs/cell-map?style=for-the-badge)
+
 This crate provides the `CellMap` type, a 2D map with many layers comprised of
 cells that can store arbitrary data. It is based on
 [ANYbotics/grid_map](https://github.com/ANYbotics/grid_map), a C++ ROS package
@@ -54,7 +56,9 @@ let my_map = CellMap::<MyLayer, f64>::new_from_elem(
 
 `CellMap` provides methods to produce iterators over its data:
   - `CellMap::iter()` gives an iterator over all cells in every layer of the map
-  - `CellMap::window_iter()` gives an iterator over rectangular windows into the map.
+  - `CellMap::window_iter()` gives an iterator over rectangular windows into
+    the map.
+  - `CellMap::line_iter()`  gives an iterator of cells between two world points
 
 All iterators also provide a mutable variant, and more iterators are planned
 in the future!
