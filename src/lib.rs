@@ -170,7 +170,7 @@ pub(crate) mod test_utils {
 
     use serde::Serialize;
 
-    use crate::{CellMap, Layer};
+    use crate::Layer;
 
     #[derive(Clone, Copy, Debug, Serialize)]
     #[allow(dead_code)]
