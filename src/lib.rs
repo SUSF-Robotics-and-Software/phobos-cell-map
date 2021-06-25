@@ -60,7 +60,8 @@
 //!
 //! [`CellMap`] provides methods to produce iterators over its data:
 //!   - [`CellMap::iter()`] gives an iterator over all cells in every layer of the map
-//!   - [`CellMap::window_iter()`] gives an iterator over rectangular windows into the map.
+//!   - [`CellMap::window_iter()`] gives an iterator over rectangular windows into the map
+//!   - [`CellMap::line_iter()`] gives an iterator of cells between two world points
 //!
 //! All iterators also provide a mutable variant, and more iterators are planned
 //! in the future!

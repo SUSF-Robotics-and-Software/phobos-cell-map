@@ -1,5 +1,7 @@
 //! Provides the [`CellMapMetadata`] struct which describes metadata about a [`CellMap`], such as
 //! its location and size.
+//!
+//! [`CellMap`]: crate::CellMap
 
 // ------------------------------------------------------------------------------------------------
 // IMPORTS
