@@ -50,7 +50,7 @@
 //!     CellMapParams {
 //!         cell_size: Vector2::new(1.0, 1.0),
 //!         num_cells: Vector2::new(5, 5),
-//!         centre: Vector2::new(0.0, 0.0),
+//!         ..Default::default()
 //!     },
 //!     1.0,
 //! );
@@ -60,7 +60,8 @@
 //!
 //! [`CellMap`] provides methods to produce iterators over its data:
 //!   - [`CellMap::iter()`] gives an iterator over all cells in every layer of the map
-//!   - [`CellMap::window_iter()`] gives an iterator over rectangular windows into the map.
+//!   - [`CellMap::window_iter()`] gives an iterator over rectangular windows into the map
+//!   - [`CellMap::line_iter()`] gives an iterator of cells between two world points
 //!
 //! All iterators also provide a mutable variant, and more iterators are planned
 //! in the future!
@@ -85,7 +86,7 @@
 //! #     CellMapParams {
 //! #         cell_size: Vector2::new(1.0, 1.0),
 //! #         num_cells: Vector2::new(5, 5),
-//! #         centre: Vector2::new(0.0, 0.0),
+//! #         ..Default::default()
 //! #     },
 //! #     1.0,
 //! # );
@@ -115,16 +116,25 @@
 //! ```
 
 #![warn(missing_docs)]
+#![warn(missing_copy_implementations)]
+#![warn(missing_debug_implementations)]
 
 // ------------------------------------------------------------------------------------------------
 // MODULES
 // ------------------------------------------------------------------------------------------------
 
-mod cell_map;
+#[macro_use]
+mod macros;
+
+pub(crate) mod cell_map;
+pub mod cell_map_file;
 pub mod error;
 pub(crate) mod extensions;
 pub mod iterators;
 mod layer;
+mod map_metadata;
+#[cfg(test)]
+mod tests;
 
 // ------------------------------------------------------------------------------------------------
 // EXPORTS
@@ -139,11 +149,31 @@ pub use layer::Layer;
 // USEFUL TEST UTILITIES
 // ------------------------------------------------------------------------------------------------
 
+#[cfg(feature = "debug_maps")]
+use serde::Serialize;
+
+/// Writes the given map to the given location, prepending "_debug_" to the name.
+#[cfg(feature = "debug_maps")]
+pub fn write_debug_map<L: Layer + Serialize, T: Serialize + Clone>(
+    map: &CellMap<L, T>,
+    name: &str,
+) {
+    #[cfg(feature = "debug_maps")]
+    {
+        let file_name = &format!("_debug_{}_map.json", name);
+        map.write_json(file_name)
+            .expect("Failed to write debug map!");
+    }
+}
 #[cfg(test)]
-mod test_utils {
+#[macro_use]
+pub(crate) mod test_utils {
+
+    use serde::Serialize;
+
     use crate::Layer;
 
-    #[derive(Clone, Copy, Debug)]
+    #[derive(Clone, Copy, Debug, Serialize)]
     #[allow(dead_code)]
     pub enum TestLayers {
         Layer0,

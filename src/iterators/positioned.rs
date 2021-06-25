@@ -1,5 +1,5 @@
-//! Provides the [`Indexed`] wrapper type which modifies a [`Slicer`] to produce the current index
-//! as well as the value.
+//! Provides the [`Positioned`] wrapper type which modifies a [`Slicer`] to produce the current
+//! position as well as the value.
 
 // ------------------------------------------------------------------------------------------------
 // IMPORTS
@@ -7,24 +7,25 @@
 
 use std::marker::PhantomData;
 
-use nalgebra::Point2;
+use nalgebra::{Affine2, Point2};
 
-use crate::{iterators::Slicer, Layer};
+use crate::{extensions::Affine2Ext, iterators::Slicer, Layer};
 
 // ------------------------------------------------------------------------------------------------
 // STRUCTS
 // ------------------------------------------------------------------------------------------------
 
-/// A [`Slicer`] which wrapps another [`Slicer`] and modifies it to produce the index of the item
+/// A [`Slicer`] which wrapps another [`Slicer`] and modifies it to produce the position of the item
 /// as well as the item itself.
 #[derive(Debug, Clone, Copy)]
-pub struct Indexed<'a, L, T, S>
+pub struct Positioned<'a, L, T, S>
 where
     L: Layer,
     S: Slicer<'a, L, T>,
 {
     slicer: S,
     layer: L,
+    to_parent: Affine2<f64>,
     _phantom: PhantomData<(L, &'a T)>,
 }
 
@@ -32,39 +33,42 @@ where
 // IMPLS
 // ------------------------------------------------------------------------------------------------
 
-impl<'a, L, T, S> Indexed<'a, L, T, S>
+impl<'a, L, T, S> Positioned<'a, L, T, S>
 where
     L: Layer,
     S: Slicer<'a, L, T>,
 {
-    pub(crate) fn new(slicer: S, layer: L) -> Self {
+    pub(crate) fn new(slicer: S, layer: L, to_parent: Affine2<f64>) -> Self {
         Self {
             slicer,
             layer,
+            to_parent,
             _phantom: PhantomData,
         }
     }
 }
 
-impl<'a, L, T, S> Slicer<'a, L, T> for Indexed<'a, L, T, S>
+impl<'a, L, T, S> Slicer<'a, L, T> for Positioned<'a, L, T, S>
 where
     L: Layer,
     S: Slicer<'a, L, T>,
 {
-    type Output = ((L, Point2<usize>), S::Output);
+    type Output = ((L, Point2<f64>), S::Output);
 
-    type OutputMut = ((L, Point2<usize>), S::OutputMut);
+    type OutputMut = ((L, Point2<f64>), S::OutputMut);
 
     fn slice(&self, data: &'a ndarray::Array2<T>) -> Option<Self::Output> {
         let item = self.slicer.slice(data)?;
+        let index = self.slicer.index()?;
 
-        Some(((self.layer.clone(), self.slicer.index().unwrap()), item))
+        Some(((self.layer.clone(), self.to_parent.position(index)), item))
     }
 
     fn slice_mut(&self, data: &'a mut ndarray::Array2<T>) -> Option<Self::OutputMut> {
         let item = self.slicer.slice_mut(data)?;
+        let index = self.slicer.index()?;
 
-        Some(((self.layer.clone(), self.slicer.index().unwrap()), item))
+        Some(((self.layer.clone(), self.to_parent.position(index)), item))
     }
 
     fn advance(&mut self) {

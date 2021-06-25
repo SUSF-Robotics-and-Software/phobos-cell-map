@@ -30,7 +30,7 @@
 //! #     CellMapParams {
 //! #         cell_size: Vector2::new(1.0, 1.0),
 //! #         num_cells: Vector2::new(5, 5),
-//! #         centre: Vector2::new(0.0, 0.0),
+//! #         ..Default::default()
 //! #     },
 //! #     1.0,
 //! # );
@@ -47,6 +47,7 @@
 
 pub mod indexed;
 pub mod layerers;
+pub mod positioned;
 pub mod slicers;
 #[cfg(test)]
 mod tests;
@@ -56,18 +57,20 @@ mod tests;
 // ------------------------------------------------------------------------------------------------
 
 use layerers::*;
-use nalgebra::Vector2;
+use nalgebra::{Point2, Vector2};
 use slicers::*;
 
 use crate::{CellMap, CellMapError, Layer};
 
-use self::indexed::Indexed;
+use self::{indexed::Indexed, positioned::Positioned};
 
 // ------------------------------------------------------------------------------------------------
 // STRUCTS
 // ------------------------------------------------------------------------------------------------
 
-/// A non-mutable iterator over a [`CellMap`], see [`Slicer`] and [`layerers`] for more information.
+/// A non-mutable iterator over a [`CellMap`], see [`Slicer`] and [`layerers`] for more
+/// information.
+#[derive(Debug, Clone, Copy)]
 pub struct CellMapIter<'m, L, T, R, S>
 where
     L: Layer,
@@ -80,6 +83,7 @@ where
 }
 
 /// A mutable iterator over a [`CellMap`], see [`Slicer`] and [`layerers`] for more information.
+#[derive(Debug)]
 pub struct CellMapIterMut<'m, L, T, R, S>
 where
     L: Layer,
@@ -124,6 +128,20 @@ where
         })
     }
 
+    pub(crate) fn new_line(
+        map: &'m CellMap<L, T>,
+        start_position: Point2<f64>,
+        end_position: Point2<f64>,
+    ) -> Result<CellMapIter<'m, L, T, Many<L>, Line>, CellMapError> {
+        Ok(CellMapIter {
+            map,
+            layerer: Many {
+                layers: L::all().into(),
+            },
+            slicer: Line::from_map::<L, T>(map.metadata, start_position, end_position)?,
+        })
+    }
+
     /// Converts this iterator to use a [`Single`] layerer, produing data from only one layer.
     pub fn layer(self, layer: L) -> CellMapIter<'m, L, T, Single<L>, S> {
         CellMapIter {
@@ -151,6 +169,17 @@ where
             map: self.map,
             layerer: self.layerer,
             slicer: Indexed::new(self.slicer, current_layer),
+        }
+    }
+
+    /// Converts this iterator to also produce the position of the iterated item as well as its
+    /// value.
+    pub fn positioned(self) -> CellMapIter<'m, L, T, R, Positioned<'m, L, T, S>> {
+        let current_layer = self.layerer.current().unwrap();
+        CellMapIter {
+            map: self.map,
+            layerer: self.layerer,
+            slicer: Positioned::new(self.slicer, current_layer, self.map.to_parent()),
         }
     }
 }
@@ -190,6 +219,21 @@ where
         })
     }
 
+    pub(crate) fn new_line(
+        map: &'m mut CellMap<L, T>,
+        start_position: Point2<f64>,
+        end_position: Point2<f64>,
+    ) -> Result<CellMapIterMut<'m, L, T, Many<L>, Line>, CellMapError> {
+        let metadata = map.metadata;
+        Ok(CellMapIterMut {
+            map,
+            layerer: Many {
+                layers: L::all().into(),
+            },
+            slicer: Line::from_map::<L, T>(metadata, start_position, end_position)?,
+        })
+    }
+
     /// Converts this iterator to use a [`Single`] layerer, produing data from only one layer.
     pub fn layer(self, layer: L) -> CellMapIterMut<'m, L, T, Single<L>, S> {
         CellMapIterMut {
@@ -226,6 +270,18 @@ where
             map: self.map,
             layerer: self.layerer,
             slicer: Indexed::new(self.slicer, current_layer),
+        }
+    }
+
+    /// Converts this iterator to also produce the position of the iterated item as well as its
+    /// value.
+    pub fn positioned(self) -> CellMapIterMut<'m, L, T, R, Positioned<'m, L, T, S>> {
+        let current_layer = self.layerer.current().unwrap();
+        let to_parent = self.map.to_parent();
+        CellMapIterMut {
+            map: self.map,
+            layerer: self.layerer,
+            slicer: Positioned::new(self.slicer, current_layer, to_parent),
         }
     }
 }

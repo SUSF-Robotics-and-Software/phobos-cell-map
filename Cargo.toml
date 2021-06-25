@@ -16,6 +16,15 @@ path = "src/lib.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+# Feature enabling `from_json` and `to_json` functionality.
+json = ["serde_json"]
+# Debugging feature which will create `_debug_x_report.json` files to visualise iterators.
+debug_iters = ["json"]
+# Debugging feature which will create `_debug_x_map.json` files to visualise
+# maps from tests.
+debug_maps = ["json"]
+
 [dependencies]
 ndarray = { version = "0.15", features = ["serde"] }
 # rust-analyzer can't processes the new const-generics in nalgebra 0.26 yet, so
@@ -23,8 +32,13 @@ ndarray = { version = "0.15", features = ["serde"] }
 # https://github.com/rust-analyzer/rust-analyzer/issues/8654. 
 nalgebra = { version = "0.25.4", features = ["serde-serialize"] }
 serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1", optional = true }
 cell-map-macro = "0.2"
 thiserror = "1"
+
+[package.metadata.docs.rs]
+# For latex in doc comments
+rustdoc-args = [ "--html-in-header", "src/docs-latex.html" ]
 
 [workspace]
 
