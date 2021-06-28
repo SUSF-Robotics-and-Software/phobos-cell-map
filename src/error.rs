@@ -12,7 +12,7 @@ use nalgebra::{Point2, Vector2};
 ///
 /// [`CellMap`]: crate::CellMap
 #[derive(Debug, thiserror::Error)]
-pub enum CellMapError {
+pub enum Error {
     /// Error returned when trying to construct a [`Windows`] slicer using a `semi_width` which
     /// would create a window larger than the size of the map.
     ///
@@ -32,11 +32,12 @@ pub enum CellMapError {
     #[error("Expected {0} cells in layer, but found {1}")]
     LayerWrongShape(Vector2<usize>, Vector2<usize>),
 
-    /// Occurs when a map cannot be loaded from a file.
-    #[error("Could not load map: {0}")]
-    LoadError(Box<dyn std::error::Error>),
+    /// Errors associated with `std::io` operations.
+    #[error("An IO error occured: {0}")]
+    IoError(std::io::Error),
 
-    /// Occurs when a map cannot be written to a file.
-    #[error("Could not write map: {0}")]
-    WriteError(Box<dyn std::error::Error>),
+    /// Errors associated with `serde_json` operations.
+    #[cfg(feature = "json")]
+    #[error("Error in serde_json: {0}")]
+    JsonError(serde_json::Error),
 }

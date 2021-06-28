@@ -60,7 +60,7 @@ use layerers::*;
 use nalgebra::{Point2, Vector2};
 use slicers::*;
 
-use crate::{CellMap, CellMapError, Layer};
+use crate::{CellMap, Error, Layer};
 
 use self::{indexed::Indexed, positioned::Positioned};
 
@@ -118,7 +118,7 @@ where
     pub(crate) fn new_windows(
         map: &'m CellMap<L, T>,
         semi_width: Vector2<usize>,
-    ) -> Result<CellMapIter<'m, L, T, Many<L>, Windows>, CellMapError> {
+    ) -> Result<CellMapIter<'m, L, T, Many<L>, Windows>, Error> {
         Ok(CellMapIter {
             map,
             layerer: Many {
@@ -132,7 +132,7 @@ where
         map: &'m CellMap<L, T>,
         start_position: Point2<f64>,
         end_position: Point2<f64>,
-    ) -> Result<CellMapIter<'m, L, T, Many<L>, Line>, CellMapError> {
+    ) -> Result<CellMapIter<'m, L, T, Many<L>, Line>, Error> {
         Ok(CellMapIter {
             map,
             layerer: Many {
@@ -207,7 +207,7 @@ where
     pub(crate) fn new_windows(
         map: &'m mut CellMap<L, T>,
         semi_width: Vector2<usize>,
-    ) -> Result<CellMapIterMut<'m, L, T, Many<L>, Windows>, CellMapError> {
+    ) -> Result<CellMapIterMut<'m, L, T, Many<L>, Windows>, Error> {
         let slicer = Windows::from_map(map, semi_width)?;
 
         Ok(CellMapIterMut {
@@ -223,7 +223,7 @@ where
         map: &'m mut CellMap<L, T>,
         start_position: Point2<f64>,
         end_position: Point2<f64>,
-    ) -> Result<CellMapIterMut<'m, L, T, Many<L>, Line>, CellMapError> {
+    ) -> Result<CellMapIterMut<'m, L, T, Many<L>, Line>, Error> {
         let metadata = map.metadata;
         Ok(CellMapIterMut {
             map,
