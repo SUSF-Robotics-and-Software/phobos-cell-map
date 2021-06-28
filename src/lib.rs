@@ -142,7 +142,7 @@ mod tests;
 
 pub use crate::cell_map::{CellMap, CellMapParams};
 pub use cell_map_macro::Layer;
-pub use error::CellMapError;
+pub use error::Error;
 pub use layer::Layer;
 
 // ------------------------------------------------------------------------------------------------

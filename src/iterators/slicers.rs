@@ -11,7 +11,7 @@ use nalgebra::{Point2, Vector2};
 use ndarray::{s, Array2, ArrayView2, ArrayViewMut2};
 use serde::Serialize;
 
-use crate::{extensions::Point2Ext, map_metadata::CellMapMetadata, CellMap, CellMapError, Layer};
+use crate::{extensions::Point2Ext, map_metadata::CellMapMetadata, CellMap, Error, Layer};
 
 // ------------------------------------------------------------------------------------------------
 // TRAITS
@@ -180,11 +180,11 @@ impl Windows {
     pub(crate) fn from_map<L: Layer, T>(
         map: &CellMap<L, T>,
         semi_width: Vector2<usize>,
-    ) -> Result<Self, CellMapError> {
+    ) -> Result<Self, Error> {
         let cells = map.num_cells();
 
         if semi_width.x * 2 + 1 > cells.x || semi_width.y * 2 + 1 > cells.y {
-            Err(CellMapError::WindowLargerThanMap(
+            Err(Error::WindowLargerThanMap(
                 semi_width * 2 + Vector2::new(1, 1),
                 cells,
             ))
@@ -262,7 +262,7 @@ impl Line {
         map_meta: CellMapMetadata,
         start_parent: Point2<f64>,
         end_parent: Point2<f64>,
-    ) -> Result<Self, CellMapError> {
+    ) -> Result<Self, Error> {
         // Calculate start and end points in map frame, note these aren't cell indices, instead
         // they are floating point positions within the map frame, which we get by not casting the
         // output of the `to_parent` transforms to usize.
@@ -279,17 +279,14 @@ impl Line {
             || start_map.y < 0.0
             || start_map.y > map_y_lim
         {
-            return Err(CellMapError::PositionOutsideMap(
+            return Err(Error::PositionOutsideMap(
                 "Line::Start".into(),
                 start_parent,
             ));
         }
 
         if end_map.x < 0.0 || end_map.x > map_x_lim || end_map.y < 0.0 || end_map.y > map_y_lim {
-            return Err(CellMapError::PositionOutsideMap(
-                "Line::End".into(),
-                start_parent,
-            ));
+            return Err(Error::PositionOutsideMap("Line::End".into(), start_parent));
         }
 
         // Calculate direction vector
@@ -301,7 +298,7 @@ impl Line {
         // Get the cell index of the end point
         let end_cell = map_meta
             .index(end_parent)
-            .ok_or_else(|| CellMapError::PositionOutsideMap("Line::End".into(), end_parent))?;
+            .ok_or_else(|| Error::PositionOutsideMap("Line::End".into(), end_parent))?;
 
         Ok(Self {
             bounds: map_meta.get_bounds(),

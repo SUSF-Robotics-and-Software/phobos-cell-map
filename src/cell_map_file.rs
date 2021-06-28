@@ -10,7 +10,7 @@ use nalgebra::{Affine2, Vector2};
 use ndarray::Array2;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-use crate::{CellMap, CellMapError, CellMapParams, Layer};
+use crate::{CellMap, CellMapParams, Error, Layer};
 
 // ------------------------------------------------------------------------------------------------
 // STRUCTS
@@ -62,7 +62,7 @@ where
     L: Layer,
 {
     /// Converts this file into a [`CellMap`].
-    pub fn into_cell_map(self) -> Result<CellMap<L, T>, CellMapError> {
+    pub fn into_cell_map(self) -> Result<CellMap<L, T>, Error> {
         let params = CellMapParams {
             cell_size: self.cell_size,
             num_cells: self.num_cells,
@@ -103,18 +103,16 @@ where
     /// Writes the [`CellMapFile`] to the given path, overwriting any existing file. The format of
     /// the written file is JSON.
     #[cfg(feature = "json")]
-    pub fn write_json<P: AsRef<std::path::Path>>(
-        &self,
-        path: P,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn write_json<P: AsRef<std::path::Path>>(&self, path: P) -> Result<(), Error> {
         let file = std::fs::OpenOptions::new()
             .create(true)
             .append(false)
             .truncate(true)
             .write(true)
-            .open(path)?;
+            .open(path)
+            .map_err(Error::IoError)?;
 
-        serde_json::to_writer_pretty(file, &self)?;
+        serde_json::to_writer_pretty(file, &self).map_err(Error::JsonError)?;
 
         Ok(())
     }
@@ -127,12 +125,11 @@ where
 {
     /// Loads a [`CellMapFile`] from the given path, which points to a JSON file.
     #[cfg(feature = "json")]
-    pub fn from_json<P: AsRef<std::path::Path>>(
-        path: P,
-    ) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn from_json<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Error> {
         // Open the file
-        let file = std::fs::File::open(path)?;
-        let map_file: CellMapFile<L, T> = serde_json::from_reader(&file)?;
+        let file = std::fs::File::open(path).map_err(Error::IoError)?;
+        let map_file: CellMapFile<L, T> =
+            serde_json::from_reader(&file).map_err(Error::JsonError)?;
         Ok(map_file)
     }
 }
@@ -151,7 +148,7 @@ impl<L, T> TryFrom<CellMapFile<L, T>> for CellMap<L, T>
 where
     L: Layer,
 {
-    type Error = CellMapError;
+    type Error = Error;
 
     fn try_from(value: CellMapFile<L, T>) -> Result<Self, Self::Error> {
         value.into_cell_map()

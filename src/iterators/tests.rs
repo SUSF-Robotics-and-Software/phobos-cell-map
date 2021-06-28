@@ -32,7 +32,7 @@ fn construction() {
 }
 
 #[test]
-fn counts() -> Result<(), CellMapError> {
+fn counts() -> Result<(), Error> {
     // Dummy map
     let mut map = CellMap::<TestLayers, f64>::new_from_elem(
         CellMapParams {
@@ -70,7 +70,7 @@ fn counts() -> Result<(), CellMapError> {
 }
 
 #[test]
-fn line() -> Result<(), CellMapError> {
+fn line() -> Result<(), Error> {
     // Dummy map
     let map = CellMap::<TestLayers, f64>::new_from_elem(
         CellMapParams {

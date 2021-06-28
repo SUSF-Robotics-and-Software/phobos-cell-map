@@ -23,7 +23,7 @@ use crate::{
         CellMapIter, CellMapIterMut,
     },
     map_metadata::CellMapMetadata,
-    CellMapError, Layer,
+    Error, Layer,
 };
 
 // ------------------------------------------------------------------------------------------------
@@ -119,19 +119,16 @@ where
     ///
     /// If data is the wrong shape or has the wrong number of layers this function will return an
     /// error.
-    pub fn new_from_data(
-        params: CellMapParams,
-        data: Vec<Array2<T>>,
-    ) -> Result<Self, CellMapError> {
+    pub fn new_from_data(params: CellMapParams, data: Vec<Array2<T>>) -> Result<Self, Error> {
         if data.len() != L::NUM_LAYERS {
-            return Err(CellMapError::WrongNumberOfLayers(L::NUM_LAYERS, data.len()));
+            return Err(Error::WrongNumberOfLayers(L::NUM_LAYERS, data.len()));
         }
 
         if !data.is_empty() {
             let layer_cells = Vector2::new(data[0].shape()[0], data[0].shape()[1]);
 
             if layer_cells != params.num_cells {
-                return Err(CellMapError::LayerWrongShape(layer_cells, params.num_cells));
+                return Err(Error::LayerWrongShape(layer_cells, params.num_cells));
             }
         }
 
@@ -264,7 +261,7 @@ where
     pub fn window_iter(
         &self,
         semi_width: Vector2<usize>,
-    ) -> Result<CellMapIter<'_, L, T, Many<L>, Windows>, CellMapError> {
+    ) -> Result<CellMapIter<'_, L, T, Many<L>, Windows>, Error> {
         CellMapIter::<'_, L, T, Many<L>, Windows>::new_windows(self, semi_width)
     }
 
@@ -276,7 +273,7 @@ where
     pub fn window_iter_mut(
         &mut self,
         semi_width: Vector2<usize>,
-    ) -> Result<CellMapIterMut<'_, L, T, Many<L>, Windows>, CellMapError> {
+    ) -> Result<CellMapIterMut<'_, L, T, Many<L>, Windows>, Error> {
         CellMapIterMut::<'_, L, T, Many<L>, Windows>::new_windows(self, semi_width)
     }
 
@@ -286,7 +283,7 @@ where
         &self,
         start_position: Point2<f64>,
         end_position: Point2<f64>,
-    ) -> Result<CellMapIter<'_, L, T, Many<L>, Line>, CellMapError> {
+    ) -> Result<CellMapIter<'_, L, T, Many<L>, Line>, Error> {
         CellMapIter::<'_, L, T, Many<L>, Line>::new_line(self, start_position, end_position)
     }
 
@@ -296,7 +293,7 @@ where
         &mut self,
         start_position: Point2<f64>,
         end_position: Point2<f64>,
-    ) -> Result<CellMapIterMut<'_, L, T, Many<L>, Line>, CellMapError> {
+    ) -> Result<CellMapIterMut<'_, L, T, Many<L>, Line>, Error> {
         CellMapIterMut::<'_, L, T, Many<L>, Line>::new_line(self, start_position, end_position)
     }
 }
@@ -314,11 +311,9 @@ where
 
     /// Writes the map to the given path as a JSON file.
     #[cfg(feature = "json")]
-    pub fn write_json<P: AsRef<std::path::Path>>(&self, path: P) -> Result<(), CellMapError> {
+    pub fn write_json<P: AsRef<std::path::Path>>(&self, path: P) -> Result<(), Error> {
         let map_file = CellMapFile::new(&self);
-        map_file
-            .write_json(path)
-            .map_err(|e| CellMapError::WriteError(e))
+        map_file.write_json(path)
     }
 }
 
@@ -329,8 +324,8 @@ where
 {
     /// Loads a map stored in JSON format at the given path.
     #[cfg(feature = "json")]
-    pub fn from_json<P: AsRef<std::path::Path>>(path: P) -> Result<Self, CellMapError> {
-        let map_file = CellMapFile::from_json(path).map_err(|e| CellMapError::LoadError(e))?;
+    pub fn from_json<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Error> {
+        let map_file = CellMapFile::from_json(path)?;
         map_file.into_cell_map()
     }
 }
