@@ -31,7 +31,12 @@ use crate::{
 // ------------------------------------------------------------------------------------------------
 
 /// Provides a many-layer 2D map of cellular data.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(
+    try_from = "CellMapFile<L, T>",
+    into = "CellMapFile<L, T>",
+    bound = "T: Clone + Serialize + DeserializeOwned, L: Serialize + DeserializeOwned"
+)]
 pub struct CellMap<L, T>
 where
     L: Layer,
