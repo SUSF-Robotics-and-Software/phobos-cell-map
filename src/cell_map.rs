@@ -153,6 +153,11 @@ where
         self.metadata.num_cells
     }
 
+    /// Returns the parameters used to build this map.
+    pub fn params(&self) -> CellMapParams {
+        self.params
+    }
+
     /// Gets the [`nalgebra::Affine2<f64>`] transformation between the map frame and the parent
     /// frame.
     pub fn to_parent(&self) -> Affine2<f64> {
