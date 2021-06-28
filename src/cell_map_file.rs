@@ -4,6 +4,8 @@
 // IMPORTS
 // ------------------------------------------------------------------------------------------------
 
+use std::convert::TryFrom;
+
 use nalgebra::{Affine2, Vector2};
 use ndarray::Array2;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
@@ -132,5 +134,26 @@ where
         let file = std::fs::File::open(path)?;
         let map_file: CellMapFile<L, T> = serde_json::from_reader(&file)?;
         Ok(map_file)
+    }
+}
+
+impl<L, T> From<CellMap<L, T>> for CellMapFile<L, T>
+where
+    L: Layer + Serialize,
+    T: Clone + Serialize,
+{
+    fn from(map: CellMap<L, T>) -> Self {
+        Self::new(&map)
+    }
+}
+
+impl<L, T> TryFrom<CellMapFile<L, T>> for CellMap<L, T>
+where
+    L: Layer,
+{
+    type Error = CellMapError;
+
+    fn try_from(value: CellMapFile<L, T>) -> Result<Self, Self::Error> {
+        value.into_cell_map()
     }
 }
