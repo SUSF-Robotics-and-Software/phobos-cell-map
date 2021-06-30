@@ -58,3 +58,27 @@ impl Affine2Ext for Affine2<f64> {
         self.transform_point(&index_centre)
     }
 }
+
+// ------------------------------------------------------------------------------------------------
+// TESTS
+// ------------------------------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::Point2Ext;
+    use nalgebra::{Point2, Vector2};
+
+    #[test]
+    fn bounds() {
+        let bounds = Vector2::new((1, 8), (1, 8));
+
+        assert!(Point2::new(1, 1).in_bounds(&bounds));
+        assert!(Point2::new(1, 7).in_bounds(&bounds));
+        assert!(Point2::new(7, 1).in_bounds(&bounds));
+        assert!(Point2::new(7, 7).in_bounds(&bounds));
+        assert!(!Point2::new(0, 0).in_bounds(&bounds));
+        assert!(!Point2::new(0, 8).in_bounds(&bounds));
+        assert!(!Point2::new(8, 0).in_bounds(&bounds));
+        assert!(!Point2::new(8, 8).in_bounds(&bounds));
+    }
+}

@@ -70,6 +70,59 @@ fn counts() -> Result<(), Error> {
 }
 
 #[test]
+fn window() -> Result<(), Error> {
+    // Dummy map
+    let map = CellMap::<TestLayers, f64>::new_from_elem(
+        CellMapParams {
+            cell_size: Vector2::new(1.0, 1.0),
+            num_cells: Vector2::new(6, 6),
+            ..Default::default()
+        },
+        1.0,
+    );
+
+    // Check shape is correct
+    let first = map
+        .window_iter(Vector2::new(1, 1))?
+        .layer(TestLayers::Layer0)
+        .next();
+
+    assert_eq!(first.unwrap().shape(), &[3, 3]);
+
+    // Check the order of cells produced is correct
+    let indices: Vec<(usize, usize)> = map
+        .window_iter(Vector2::new(1, 1))?
+        .layer(TestLayers::Layer0)
+        .indexed()
+        .map(|((_, idx), _)| (idx.x, idx.y))
+        .collect();
+
+    assert_eq!(
+        indices,
+        vec![
+            (1, 1),
+            (2, 1),
+            (3, 1),
+            (4, 1),
+            (1, 2),
+            (2, 2),
+            (3, 2),
+            (4, 2),
+            (1, 3),
+            (2, 3),
+            (3, 3),
+            (4, 3),
+            (1, 4),
+            (2, 4),
+            (3, 4),
+            (4, 4),
+        ]
+    );
+
+    Ok(())
+}
+
+#[test]
 fn line() -> Result<(), Error> {
     // Dummy map
     let map = CellMap::<TestLayers, f64>::new_from_elem(
