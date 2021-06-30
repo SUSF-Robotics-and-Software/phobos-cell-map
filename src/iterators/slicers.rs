@@ -60,6 +60,7 @@ where
     fn reset(&mut self, layer: Option<L>);
 }
 
+/// Rectangular bounds in an XY plane. Lower bound is inclusive, upper exclusive.
 pub(crate) type RectBounds = Vector2<(usize, usize)>;
 
 /// A [`Slicer`] which produces cells in `(x, y)` order inside a layer, with `x` increasing most
@@ -226,9 +227,9 @@ where
     fn slice_mut(&self, data: &'a mut Array2<T>) -> Option<Self::OutputMut> {
         if self.index.in_bounds(&self.bounds) {
             let x0 = self.index.x - self.semi_width.x;
-            let x1 = self.index.x + self.semi_width.x;
+            let x1 = self.index.x + self.semi_width.x + 1;
             let y0 = self.index.y - self.semi_width.y;
-            let y1 = self.index.y + self.semi_width.y;
+            let y1 = self.index.y + self.semi_width.y + 1;
             Some(data.slice_mut(s![y0..y1, x0..x1]))
         } else {
             None

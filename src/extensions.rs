@@ -37,7 +37,7 @@ pub(crate) trait Affine2Ext {
 
 impl ToShape for Vector2<usize> {
     fn to_shape(&self) -> (usize, usize) {
-        (self.x, self.y)
+        (self.y, self.x)
     }
 }
 
@@ -56,5 +56,29 @@ impl Affine2Ext for Affine2<f64> {
         // Get the centre of the cell, which is + 0.5 cells in the x and y direction.
         let index_centre = index.cast() + Vector2::new(0.5, 0.5);
         self.transform_point(&index_centre)
+    }
+}
+
+// ------------------------------------------------------------------------------------------------
+// TESTS
+// ------------------------------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::Point2Ext;
+    use nalgebra::{Point2, Vector2};
+
+    #[test]
+    fn bounds() {
+        let bounds = Vector2::new((1, 4), (1, 8));
+
+        assert!(Point2::new(1, 1).in_bounds(&bounds));
+        assert!(Point2::new(1, 7).in_bounds(&bounds));
+        assert!(Point2::new(3, 1).in_bounds(&bounds));
+        assert!(Point2::new(3, 7).in_bounds(&bounds));
+        assert!(!Point2::new(0, 0).in_bounds(&bounds));
+        assert!(!Point2::new(0, 8).in_bounds(&bounds));
+        assert!(!Point2::new(4, 0).in_bounds(&bounds));
+        assert!(!Point2::new(4, 8).in_bounds(&bounds));
     }
 }
