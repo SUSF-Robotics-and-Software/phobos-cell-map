@@ -75,7 +75,7 @@ fn window() -> Result<(), Error> {
     let map = CellMap::<TestLayers, f64>::new_from_elem(
         CellMapParams {
             cell_size: Vector2::new(1.0, 1.0),
-            num_cells: Vector2::new(6, 6),
+            num_cells: Vector2::new(5, 6),
             ..Default::default()
         },
         1.0,
@@ -103,19 +103,19 @@ fn window() -> Result<(), Error> {
             (1, 1),
             (2, 1),
             (3, 1),
-            (4, 1),
+            // (4, 1),
             (1, 2),
             (2, 2),
             (3, 2),
-            (4, 2),
+            // (4, 2),
             (1, 3),
             (2, 3),
             (3, 3),
-            (4, 3),
+            // (4, 3),
             (1, 4),
             (2, 4),
             (3, 4),
-            (4, 4),
+            // (4, 4),
         ]
     );
 
