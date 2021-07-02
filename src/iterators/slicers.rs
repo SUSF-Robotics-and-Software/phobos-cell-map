@@ -271,8 +271,8 @@ impl Line {
         let end_map = map_meta.to_parent.inverse_transform_point(&end_parent);
 
         // Get map edges in floating point for bounds check
-        let map_x_lim = map_meta.num_cells.x as f64;
-        let map_y_lim = map_meta.num_cells.y as f64;
+        let map_x_lim = (map_meta.num_cells.x) as f64;
+        let map_y_lim = (map_meta.num_cells.y) as f64;
 
         // Check start and end points are inside the map
         if start_map.x < 0.0
@@ -345,14 +345,14 @@ where
         // Get the index
         let index = self.get_current_index()?;
 
-        Some(&data[index.as_array2_index()])
+        data.get(index.as_array2_index())
     }
 
     fn slice_mut(&self, data: &'a mut Array2<T>) -> Option<Self::OutputMut> {
         // Get the index
         let index = self.get_current_index()?;
 
-        Some(&mut data[index.as_array2_index()])
+        data.get_mut(index.as_array2_index())
     }
 
     fn advance(&mut self) {
@@ -362,11 +362,19 @@ where
             None => return,
         };
 
-        // If the current index matches the end cell, we are at the end, and set current to None
-        if curr_index == self.end_index {
+        // Calculate the param value, i.e. how far along the line we are. If it > 1 we're at the end
+        let param = (self.current_map.unwrap() - self.start_map).norm()
+            / (self.end_map - self.start_map).norm();
+        if param > 1.0 {
             self.current_map = None;
             return;
         }
+
+        // // If the current index matches the end cell, we are at the end, and set current to None
+        // if curr_index == self.end_index {
+        //     self.current_map = None;
+        //     return;
+        // }
 
         // Calculate the changes in the line parameter needed to reach the next x and y grid line
         // respectively. Also add on the cell boundary precision to ensure that we will actually
