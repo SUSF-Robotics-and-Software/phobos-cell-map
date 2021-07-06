@@ -38,12 +38,12 @@ def plot(report):
         else:
             a = report[0]['start_map']
 
-        b = [a + d for a, d in zip(a, step['delta'])]
-        ax.plot(
-            [a[0], b[0]],
-            [a[1], b[1]],
-            '-b'
-        )
+        # b = [a + d for a, d in zip(a, step['delta'])]
+        # ax.plot(
+        #     [a[0], b[0]],
+        #     [a[1], b[1]],
+        #     '-b'
+        # )
 
     # ax.set_aspect('equal', 'box')
 

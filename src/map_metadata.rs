@@ -10,7 +10,7 @@
 use nalgebra::{Affine2, Isometry2, Matrix3, Point2, Vector2};
 use serde::{Deserialize, Serialize};
 
-use crate::{iterators::slicers::RectBounds, CellMapParams};
+use crate::{cell_map::Bounds, CellMapParams};
 
 // ------------------------------------------------------------------------------------------------
 // STRUCTS
@@ -25,7 +25,10 @@ pub(crate) struct CellMapMetadata {
     /// The size (resolution) of each cell in the map, in both the `x` and `y` directions.
     pub cell_size: Vector2<f64>,
 
-    /// The number of cells in the `x` and `y` directions.
+    /// The bounds of the map
+    pub cell_bounds: Bounds,
+
+    /// The number of cells in the map
     pub num_cells: Vector2<usize>,
 
     /// The precision to use when determining cell boundaries.
@@ -54,11 +57,6 @@ pub(crate) struct CellMapMetadata {
 // ------------------------------------------------------------------------------------------------
 
 impl CellMapMetadata {
-    /// Returns the bounds of the map in map frame coordinates.
-    pub fn get_bounds(&self) -> RectBounds {
-        Vector2::new((0, self.num_cells.x), (0, self.num_cells.y))
-    }
-
     /// Returns whether or not the given index is inside the map.
     pub fn is_in_map(&self, index: Point2<usize>) -> bool {
         index.x < self.num_cells.x && index.y < self.num_cells.y
@@ -132,7 +130,12 @@ impl CellMapMetadata {
                 }
             })
             .collect();
-        Point2::new(els[0], els[1])
+
+        // What we have now is a "point", i.e. a map-frame point relative to the map origin. But if
+        // we want the index we have to account for the bounds of the map, so we must pass this
+        // through the bounds
+        self.cell_bounds
+            .get_index_unchecked(Point2::new(els[0], els[1]))
     }
 }
 
@@ -163,7 +166,8 @@ impl From<CellMapParams> for CellMapMetadata {
 
         Self {
             cell_size: params.cell_size,
-            num_cells: params.num_cells,
+            cell_bounds: params.cell_bounds,
+            num_cells: params.cell_bounds.get_num_cells(),
             cell_boundary_precision: params.cell_boundary_precision,
             to_parent,
         }

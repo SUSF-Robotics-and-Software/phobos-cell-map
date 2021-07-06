@@ -11,7 +11,9 @@ use nalgebra::{Point2, Vector2};
 use ndarray::{s, Array2, ArrayView2, ArrayViewMut2};
 use serde::Serialize;
 
-use crate::{extensions::Point2Ext, map_metadata::CellMapMetadata, CellMap, Error, Layer};
+use crate::{
+    cell_map::Bounds, extensions::Point2Ext, map_metadata::CellMapMetadata, CellMap, Error, Layer,
+};
 
 // ------------------------------------------------------------------------------------------------
 // TRAITS
@@ -89,7 +91,7 @@ pub struct Windows {
 #[derive(Debug, Clone)]
 #[allow(missing_copy_implementations)]
 pub struct Line {
-    bounds: RectBounds,
+    bounds: Bounds,
     map_meta: CellMapMetadata,
 
     start_parent: Point2<f64>,
@@ -302,7 +304,7 @@ impl Line {
             .ok_or_else(|| Error::PositionOutsideMap("Line::End".into(), end_parent))?;
 
         Ok(Self {
-            bounds: map_meta.get_bounds(),
+            bounds: map_meta.cell_bounds,
             map_meta,
             start_parent,
             end_parent,
@@ -362,19 +364,10 @@ where
             None => return,
         };
 
-        // Calculate the param value, i.e. how far along the line we are. If it > 1 we're at the end
+        // Calculate the param value, i.e. how far along the line we are. This will be used to
+        // check if we are beyond the end of the line
         let param = (self.current_map.unwrap() - self.start_map).norm()
             / (self.end_map - self.start_map).norm();
-        if param > 1.0 {
-            self.current_map = None;
-            return;
-        }
-
-        // // If the current index matches the end cell, we are at the end, and set current to None
-        // if curr_index == self.end_index {
-        //     self.current_map = None;
-        //     return;
-        // }
 
         // Calculate the changes in the line parameter needed to reach the next x and y grid line
         // respectively. Also add on the cell boundary precision to ensure that we will actually
@@ -387,8 +380,15 @@ where
         // Whichever component of delta is smaller is what we need to advance along the line by.
         let delta = delta_param.x.min(delta_param.y);
 
-        // Move current to current + dir*delta
-        self.current_map = Some(self.current_map.unwrap() + (self.dir * delta));
+        // If any of param + delta is > 1, the next point would be beyond the end of the line, so
+        // we should end here
+        if delta + param > 1.0 {
+            self.current_map = None;
+        }
+        // Otherwise, move current to current + dir*delta
+        else {
+            self.current_map = Some(self.current_map.unwrap() + (self.dir * delta));
+        }
 
         // Write new step report to file
         #[cfg(feature = "debug_iters")]

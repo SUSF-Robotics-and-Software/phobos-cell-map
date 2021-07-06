@@ -140,7 +140,7 @@ mod tests;
 // EXPORTS
 // ------------------------------------------------------------------------------------------------
 
-pub use crate::cell_map::{CellMap, CellMapParams};
+pub use crate::cell_map::{Bounds, CellMap, CellMapParams};
 pub use cell_map_macro::Layer;
 pub use error::Error;
 pub use layer::Layer;

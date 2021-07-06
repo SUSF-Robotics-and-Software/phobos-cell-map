@@ -7,7 +7,7 @@
 use nalgebra::{Point2, Vector2};
 
 use super::*;
-use crate::test_utils::TestLayers;
+use crate::{cell_map::Bounds, test_utils::TestLayers};
 
 // ------------------------------------------------------------------------------------------------
 // TESTS
@@ -17,7 +17,7 @@ use crate::test_utils::TestLayers;
 fn get_cell_positions() {
     // Empty map with no difference to the parent
     let map = CellMap::<TestLayers, f64>::new(CellMapParams {
-        num_cells: Vector2::new(10, 10),
+        cell_bounds: Bounds::new((0, 10), (0, 10)).unwrap(),
         cell_size: Vector2::new(1.0, 1.0),
         ..Default::default()
     });
@@ -43,7 +43,7 @@ fn get_cell_positions() {
 
     // Empty map with scaling
     let map = CellMap::<TestLayers, f64>::new(CellMapParams {
-        num_cells: Vector2::new(10, 10),
+        cell_bounds: Bounds::new((0, 10), (0, 10)).unwrap(),
         cell_size: Vector2::new(0.1, 0.1),
         ..Default::default()
     });
@@ -71,7 +71,7 @@ fn get_cell_positions() {
 
     // Empty map with scaling and translation
     let map = CellMap::<TestLayers, f64>::new(CellMapParams {
-        num_cells: Vector2::new(10, 10),
+        cell_bounds: Bounds::new((0, 10), (0, 10)).unwrap(),
         cell_size: Vector2::new(0.1, 0.1),
         position_in_parent: Vector2::new(0.5, 0.5),
         ..Default::default()
@@ -100,7 +100,7 @@ fn get_cell_positions() {
 
     // Empty map with scaling, translation and rotation (by pi/2 rad)
     let map = CellMap::<TestLayers, f64>::new(CellMapParams {
-        num_cells: Vector2::new(10, 10),
+        cell_bounds: Bounds::new((0, 10), (0, 10)).unwrap(),
         cell_size: Vector2::new(0.1, 0.1),
         position_in_parent: Vector2::new(0.5, 0.5),
         rotation_in_parent_rad: std::f64::consts::FRAC_PI_4,

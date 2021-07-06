@@ -4,6 +4,8 @@
 
 use nalgebra::{Point2, Vector2};
 
+use crate::cell_map::Bounds;
+
 // ------------------------------------------------------------------------------------------------
 // ENUMS
 // ------------------------------------------------------------------------------------------------
@@ -29,8 +31,8 @@ pub enum Error {
     WrongNumberOfLayers(usize, usize),
 
     /// Wrong shape of layer, got (first) but expected (second)
-    #[error("Expected {0} cells in layer, but found {1}")]
-    LayerWrongShape(Vector2<usize>, Vector2<usize>),
+    #[error("Expected {0:?} cells in layer, but found {1:?}")]
+    LayerWrongShape((usize, usize), (usize, usize)),
 
     /// Errors associated with `std::io` operations.
     #[error("An IO error occured: {0}")]
@@ -40,4 +42,8 @@ pub enum Error {
     #[cfg(feature = "json")]
     #[error("Error in serde_json: {0}")]
     JsonError(serde_json::Error),
+
+    /// Error when bounds are invalid, i.e. the minimum is larger than the maximum
+    #[error("The provided bounds are not valid: {0:?}")]
+    InvalidBounds(Bounds),
 }

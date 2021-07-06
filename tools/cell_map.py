@@ -10,6 +10,7 @@ class CellMap:
     data: typing.Dict[str, np.ndarray]
     layers: typing.List[str]
     cell_size: np.ndarray
+    cell_bounds: typing.Tuple[np.ndarray, np.ndarray]
     num_cells: np.ndarray
     extents: np.ndarray
     cell_boundary_precision: float
@@ -32,7 +33,7 @@ class CellMap:
         # Load metadata
         cm.layers = raw['layers']
         cm.cell_size = np.array(raw['cell_size'])
-        cm.num_cells = np.array(raw['num_cells'])
+        cm.cell_bounds = np.array(raw['cell_bounds'])
         cm.cell_boundary_precision = np.array(raw['cell_boundary_precision'])
         cm.from_parent = np.array(raw['from_parent_matrix']).reshape((3, 3))
         cm.to_parent = np.linalg.inv(cm.from_parent)

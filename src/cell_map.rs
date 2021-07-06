@@ -16,7 +16,6 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use crate::{
     cell_map_file::CellMapFile,
-    extensions::ToShape,
     iterators::{
         layerers::Many,
         slicers::{Cells, Line, Windows},
@@ -71,8 +70,8 @@ pub struct CellMapParams {
     ///
     /// # Default
     ///
-    /// The default value is `[0, 0]`.
-    pub num_cells: Vector2<usize>,
+    /// The default value is [`Bounds::empty()`].
+    pub cell_bounds: Bounds,
 
     /// The rotation of the map's Z axis about the parent Z axis in radians.
     ///
@@ -107,6 +106,21 @@ pub struct CellMapParams {
     pub cell_boundary_precision: f64,
 }
 
+/// Rectangular bounds describing the number of cells in each direction of the map.
+///
+/// These bounds are a half-open range, i.e. satisfied in the ranges:
+///  - $x_0 <= x < x_1$
+///  - $y_0 <= y < y_1$
+// NOTE: Range isn't uses since it's not Copy
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct Bounds {
+    /// The bounds on the x axis, in the format (min, max),
+    pub x: (isize, isize),
+
+    /// The bounds on the y axis, in the format (min, max),
+    pub y: (isize, isize),
+}
+
 // ------------------------------------------------------------------------------------------------
 // IMPLS
 // ------------------------------------------------------------------------------------------------
@@ -125,10 +139,13 @@ where
         }
 
         if !data.is_empty() {
-            let layer_cells = Vector2::new(data[0].shape()[0], data[0].shape()[1]);
+            let layer_cells = (data[0].shape()[0], data[0].shape()[1]);
 
-            if layer_cells != params.num_cells {
-                return Err(Error::LayerWrongShape(layer_cells, params.num_cells));
+            if layer_cells != params.cell_bounds.get_shape() {
+                return Err(Error::LayerWrongShape(
+                    layer_cells,
+                    params.cell_bounds.get_shape(),
+                ));
             }
         }
 
@@ -298,6 +315,102 @@ where
     }
 }
 
+impl Bounds {
+    /// Creates a new empty (zero sized) bound
+    pub fn empty() -> Self {
+        Self {
+            x: (0, 0),
+            y: (0, 0),
+        }
+    }
+
+    /// Returns if the bounds are valid or not, i.e. if the minimum is larger than the maximum.
+    pub fn is_valid(&self) -> bool {
+        self.x.0 <= self.x.1 && self.y.0 <= self.y.1
+    }
+
+    /// Creates a new bound from the given max and min cell indices in the x and y axes.
+    ///
+    /// Must satisfy:
+    ///  - $x_0 <= x_1$
+    ///  - $y_0 <= y_1$
+    pub fn new(x: (isize, isize), y: (isize, isize)) -> Result<Self, Error> {
+        let bounds = Self { x, y };
+
+        if bounds.is_valid() {
+            Ok(bounds)
+        } else {
+            Err(Error::InvalidBounds(bounds))
+        }
+    }
+
+    /// Creates a new bound from the given opposing corners of the a rectangle.
+    ///
+    /// If the corners do not satisfy `all(bottom_left <= upper_right)` the bounds will be invalid
+    /// and an error is returned.
+    pub fn from_corners(
+        bottom_left: Vector2<isize>,
+        upper_right: Vector2<isize>,
+    ) -> Result<Self, Error> {
+        let bounds = Self {
+            x: (bottom_left.x, upper_right.x),
+            y: (bottom_left.y, upper_right.y),
+        };
+
+        if bounds.is_valid() {
+            Ok(bounds)
+        } else {
+            Err(Error::InvalidBounds(bounds))
+        }
+    }
+
+    /// Checks if the given point is inside the bounds
+    pub fn contains(&self, point: Point2<isize>) -> bool {
+        self.x.0 <= point.x && point.x < self.x.1 && self.y.0 <= point.y && point.y < self.y.1
+    }
+
+    /// Gets the value of the point as an index into an array bounded by this `Bounds`.
+    ///
+    /// If the point is outside the bounds `None` is returned
+    pub fn get_index(&self, point: Point2<isize>) -> Option<Point2<usize>> {
+        if self.contains(point) {
+            let unchecked = unsafe { self.get_index_unchecked(point) };
+
+            // Have already checked that the point is inside the bounds, no need to check again
+            Some(Point2::new(unchecked.x as usize, unchecked.y as usize))
+        } else {
+            None
+        }
+    }
+
+    /// Gets the value of the point as an index into an array bounded by this `Bounds`.
+    ///
+    /// # Safety
+    ///
+    /// This function will not panic if `point` is outside the map, but use of the result to
+    /// index into the map is not guaranteed to be safe. It is possible for this function to return
+    /// a negative index value, which would indicate that the cell is outside the map.
+    pub unsafe fn get_index_unchecked(&self, point: Point2<isize>) -> Point2<isize> {
+        Point2::new(point.x - self.x.0, point.y - self.y.0)
+    }
+
+    /// Gets the shape of this rectangle in a format that `ndarray` will accept.
+    ///
+    /// NOTE: shape order is (y, x), not (x, y).
+    pub fn get_shape(&self) -> (usize, usize) {
+        (
+            (self.y.1 - self.y.0) as usize,
+            (self.x.1 - self.x.0) as usize,
+        )
+    }
+
+    /// Gets the number of cells as a vector.
+    pub fn get_num_cells(&self) -> Vector2<usize> {
+        let shape = self.get_shape();
+        Vector2::new(shape.1, shape.0)
+    }
+}
+
 impl<L, T> CellMap<L, T>
 where
     L: Layer + Serialize,
@@ -337,7 +450,7 @@ where
 {
     /// Creates a new [`CellMap`] from the given params, filling each cell with `elem`.
     pub fn new_from_elem(params: CellMapParams, elem: T) -> Self {
-        let data = vec![Array2::from_elem(params.num_cells.to_shape(), elem); L::NUM_LAYERS];
+        let data = vec![Array2::from_elem(params.cell_bounds.get_shape(), elem); L::NUM_LAYERS];
 
         Self {
             data,
@@ -356,7 +469,7 @@ where
     /// Creates a new [`CellMap`] from the given params, filling each cell with `T::default()`.
     pub fn new(params: CellMapParams) -> Self {
         let data =
-            vec![Array2::from_elem(params.num_cells.to_shape(), T::default()); L::NUM_LAYERS];
+            vec![Array2::from_elem(params.cell_bounds.get_shape(), T::default()); L::NUM_LAYERS];
 
         Self {
             data,
@@ -411,7 +524,7 @@ impl Default for CellMapParams {
     fn default() -> Self {
         Self {
             cell_size: Vector2::new(1.0, 1.0),
-            num_cells: Vector2::zeros(),
+            cell_bounds: Bounds::empty(),
             cell_boundary_precision: 1e-10,
             rotation_in_parent_rad: 0.0,
             position_in_parent: Vector2::zeros(),

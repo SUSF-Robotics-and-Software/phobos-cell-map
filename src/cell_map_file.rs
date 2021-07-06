@@ -10,7 +10,7 @@ use nalgebra::{Affine2, Vector2};
 use ndarray::Array2;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-use crate::{CellMap, CellMapParams, Error, Layer};
+use crate::{cell_map::Bounds, CellMap, CellMapParams, Error, Layer};
 
 // ------------------------------------------------------------------------------------------------
 // STRUCTS
@@ -31,8 +31,8 @@ where
     /// member.
     pub layers: Vec<L>,
 
-    /// Number of cells in each layer of the map, in the `x` and `y` map-frame directions.
-    pub num_cells: Vector2<usize>,
+    /// The bounds of the map
+    pub cell_bounds: Bounds,
 
     /// The size of each cell in the map, in parent-frame units.
     pub cell_size: Vector2<f64>,
@@ -65,7 +65,7 @@ where
     pub fn into_cell_map(self) -> Result<CellMap<L, T>, Error> {
         let params = CellMapParams {
             cell_size: self.cell_size,
-            num_cells: self.num_cells,
+            cell_bounds: self.cell_bounds,
             rotation_in_parent_rad: self.from_parent_angle_rad,
             position_in_parent: self.from_parent_translation,
             cell_boundary_precision: self.cell_boundary_precision,
@@ -84,7 +84,7 @@ where
         Self {
             num_layers: L::NUM_LAYERS,
             layers: L::all(),
-            num_cells: map.metadata.num_cells,
+            cell_bounds: map.metadata.cell_bounds,
             cell_size: map.metadata.cell_size,
             cell_boundary_precision: map.metadata.cell_boundary_precision,
             from_parent_angle_rad: map.params.rotation_in_parent_rad,
