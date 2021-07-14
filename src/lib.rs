@@ -35,7 +35,7 @@
 //! To create a new map:
 //!
 //! ```rust
-//! use cell_map::{CellMap, CellMapParams, Layer};
+//! use cell_map::{CellMap, CellMapParams, Layer, Bounds};
 //! use nalgebra::Vector2;
 //!
 //! # #[derive(Layer, Clone, Debug)]
@@ -45,11 +45,12 @@
 //! #     Roughness
 //! # }
 //! // Creates a new 5x5 map where each cell is 1.0 units wide, which is centred on (0, 0), with
-//! // all elements initialised to 1.0.
+//! // all elements initialised to 1.0. The `cell_bounds` parameter allows you to choose how many
+//! // cells are in the map by giving the min and max cell indexes (including negative indexes).
 //! let my_map = CellMap::<MyLayer, f64>::new_from_elem(
 //!     CellMapParams {
 //!         cell_size: Vector2::new(1.0, 1.0),
-//!         num_cells: Vector2::new(5, 5),
+//!         cell_bounds: Bounds::new((0, 5), (0, 5)).unwrap(),
 //!         ..Default::default()
 //!     },
 //!     1.0,
@@ -70,7 +71,7 @@
 //! data comes from. See [`iterators`] for more information.
 //!
 //! ```rust
-//! # use cell_map::{CellMap, CellMapParams, Layer};
+//! # use cell_map::{CellMap, CellMapParams, Layer, Bounds};
 //! # use nalgebra::Vector2;
 //! #
 //! # #[derive(Layer, Clone, Debug)]
@@ -85,7 +86,7 @@
 //! # let mut my_map = CellMap::<MyLayer, f64>::new_from_elem(
 //! #     CellMapParams {
 //! #         cell_size: Vector2::new(1.0, 1.0),
-//! #         num_cells: Vector2::new(5, 5),
+//! #         cell_bounds: Bounds::new((0, 5), (0, 5)).unwrap(),
 //! #         ..Default::default()
 //! #     },
 //! #     1.0,
@@ -140,7 +141,7 @@ mod tests;
 // EXPORTS
 // ------------------------------------------------------------------------------------------------
 
-pub use crate::cell_map::{CellMap, CellMapParams};
+pub use crate::cell_map::{Bounds, CellMap, CellMapParams};
 pub use cell_map_macro::Layer;
 pub use error::Error;
 pub use layer::Layer;

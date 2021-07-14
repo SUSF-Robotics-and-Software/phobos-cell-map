@@ -10,6 +10,7 @@ class CellMap:
     data: typing.Dict[str, np.ndarray]
     layers: typing.List[str]
     cell_size: np.ndarray
+    cell_bounds: typing.Tuple[np.ndarray, np.ndarray]
     num_cells: np.ndarray
     extents: np.ndarray
     cell_boundary_precision: float
@@ -30,19 +31,24 @@ class CellMap:
         cm = CellMap()
 
         # Load metadata
+        cm.path = path
         cm.layers = raw['layers']
         cm.cell_size = np.array(raw['cell_size'])
-        cm.num_cells = np.array(raw['num_cells'])
+        cm.cell_bounds = np.array([raw['cell_bounds']['x'], raw['cell_bounds']['y']])
+        cm.num_cells = np.array([
+            cm.cell_bounds[1][1] - cm.cell_bounds[1][0],
+            cm.cell_bounds[0][1] - cm.cell_bounds[0][0] 
+        ])
         cm.cell_boundary_precision = np.array(raw['cell_boundary_precision'])
         cm.from_parent = np.array(raw['from_parent_matrix']).reshape((3, 3))
         cm.to_parent = np.linalg.inv(cm.from_parent)
 
         # Calculate extents of map
         extents = np.array([
-            [0.0, 0.0], 
-            [cm.num_cells[0], 0.0],
-            [0.0, cm.num_cells[1]], 
-            [cm.num_cells[0], cm.num_cells[1]], 
+            [cm.cell_bounds[0][0], cm.cell_bounds[1][0]], 
+            [cm.cell_bounds[0][1], cm.cell_bounds[1][0]], 
+            [cm.cell_bounds[0][0], cm.cell_bounds[1][1]], 
+            [cm.cell_bounds[0][1], cm.cell_bounds[1][1]], 
         ])
         cm.extents = cm.transform_to_parent(extents)
 
@@ -50,7 +56,7 @@ class CellMap:
         cm.data = dict()
         for layer, data in zip(cm.layers, raw['data']):
             if data['dim'][0] != cm.num_cells[0] or data['dim'][1] != cm.num_cells[1]:
-                raise RuntimeError('Data in cell map file is of wrong shape')
+                raise RuntimeError(f'Data in cell map file is of wrong shape. Expected {cm.num_cells} but got {data["dim"]}')
             cm.data[layer] = np.array(data['data']).reshape(cm.num_cells)
 
         return cm

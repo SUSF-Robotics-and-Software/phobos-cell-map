@@ -8,7 +8,7 @@ import numpy as np
 import argparse
 from cell_map import CellMap
 
-def plot_map(map: CellMap, name = None, ax = None, parent_relative = True):
+def plot_map(map: CellMap, name = None, ax = None, parent_relative = True, show_grid=False):
     '''
     Plots the given CellMap
 
@@ -36,10 +36,7 @@ def plot_map(map: CellMap, name = None, ax = None, parent_relative = True):
     # Setup the axis grid
     if parent_relative:
         # Get the grid
-        line_collection = _get_parent_rel_grid(map)
-
-        # Plot lines
-        ax.add_collection(line_collection)
+        ax.add_artist(_get_parent_rel_grid(map, show_grid=show_grid))
 
         # Update map origin
         origin = map.transform_to_parent(origin.reshape((1, 2))).reshape((2,))
@@ -49,8 +46,10 @@ def plot_map(map: CellMap, name = None, ax = None, parent_relative = True):
         plot_bounds = np.max([map.cell_size[0] * 0.5, map.cell_size[1] * 0.5])
 
         # Update limits
-        x_lims = [np.min(map.extents[:,0]) - plot_bounds, np.max(map.extents[:,0]) + plot_bounds]
-        y_lims = [np.min(map.extents[:,1]) - plot_bounds, np.max(map.extents[:,1]) + plot_bounds]
+        ext_plus_origin_x = np.append(map.extents[:,0], origin[0])
+        ext_plus_origin_y = np.append(map.extents[:,1], origin[1])
+        x_lims = [np.min(ext_plus_origin_x) - plot_bounds, np.max(ext_plus_origin_x) + plot_bounds]
+        y_lims = [np.min(ext_plus_origin_y) - plot_bounds, np.max(ext_plus_origin_y) + plot_bounds]
 
     else:
         # Include the end line in the ticks
@@ -70,50 +69,39 @@ def plot_map(map: CellMap, name = None, ax = None, parent_relative = True):
     ax.set_ylim(y_lims)
     ax.set_aspect('equal', 'box')
 
-    if fig is not None:
-        fig.show()
+    if name is not None:
+        ax.set_title(name)
+    else:
+        ax.set_title(map.path)
 
-def _get_parent_rel_grid(map):
+    if fig is not None:
+        plt.show()
+
+def _get_parent_rel_grid(map, show_grid=False):
     '''
     Gets the parent-relative grid as a matplotlib.collections.LineCollection
     '''
 
-    # Approach:
-    #   Get the [x, y] coordinates of all points along the edge of the map,
-    #   in map frame coordinates, then transform all of those into parent
-    #   frame, and create lines between each opposing pair of points.
-
-    # Get x and y coordinates to plot grid lines on, we will choose to do
-    # each cell. This is in the map frame. Do +1 so we get 1 more lines than
-    # there are cells.
-    x_grids = np.array(range(map.num_cells[0] + 1))
-    y_grids = np.array(range(map.num_cells[1] + 1))
-
-    # Four arrays of points, one for each side of the map, must be in
-    # homogenous coordinates so we can transform them using the 3x3
-    # matrices. Indices of the aisles are [bot, top] for x, [left, right]
-    # for y.
-    points_x = np.empty((2, len(x_grids), 2))
-    points_x[:,:,0] = x_grids
-    points_x[0,:,1] = y_grids[0]
-    points_x[1,:,1] = y_grids[-1]
-
-    points_y = np.empty((2, len(y_grids), 2))
-    points_y[0,:,0] = x_grids[0]
-    points_y[1,:,0] = x_grids[-1]
-    points_y[:,:,1] = y_grids
+    # Create mesh grid points by transforming each meshgrid point into the
+    # parent frame
+    mesh_x, mesh_y = np.meshgrid(
+        np.array(range(map.cell_bounds[0][0], map.cell_bounds[0][1] + 1)),
+        np.array(range(map.cell_bounds[1][0], map.cell_bounds[1][1] + 1))
+    )
+    mesh_shape = mesh_x.shape
+    mesh_points = np.vstack([mesh_x.ravel(), mesh_y.ravel()]).T
+    mesh_points = map.transform_to_parent(mesh_points)
+    mesh_x, mesh_y = [mesh_points[:,0].reshape(mesh_shape), mesh_points[:,1].reshape(mesh_shape)]
     
-    # Transform each point into parent frame
-    points_x[0] = map.transform_to_parent(points_x[0])
-    points_x[1] = map.transform_to_parent(points_x[1])
-    points_y[0] = map.transform_to_parent(points_y[0])
-    points_y[1] = map.transform_to_parent(points_y[1])
+    mesh = plt.pcolormesh(
+        mesh_x, mesh_y, map.data[map.layers[0]], 
+        shading='flat', 
+        edgecolors='grey' if show_grid else None, 
+        linewidth=0.1, 
+        zorder=-1.0
+    )
 
-    # Create lines 
-    vert_lines = np.hstack((points_x[0], points_x[1]))
-    hori_lines = np.hstack((points_y[0], points_y[1]))
-    lines = np.concatenate([hori_lines, vert_lines]).reshape(-1, 2, 2)
-    return LineCollection(lines, color="gray", linewidths=1)
+    return mesh
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Plots a map JSON file')

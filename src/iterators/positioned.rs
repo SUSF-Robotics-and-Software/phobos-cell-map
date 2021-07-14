@@ -7,9 +7,9 @@
 
 use std::marker::PhantomData;
 
-use nalgebra::{Affine2, Point2};
+use nalgebra::Point2;
 
-use crate::{extensions::Affine2Ext, iterators::Slicer, Layer};
+use crate::{iterators::Slicer, map_metadata::CellMapMetadata, Layer};
 
 // ------------------------------------------------------------------------------------------------
 // STRUCTS
@@ -25,7 +25,7 @@ where
 {
     slicer: S,
     layer: L,
-    to_parent: Affine2<f64>,
+    map_meta: CellMapMetadata,
     _phantom: PhantomData<(L, &'a T)>,
 }
 
@@ -38,11 +38,11 @@ where
     L: Layer,
     S: Slicer<'a, L, T>,
 {
-    pub(crate) fn new(slicer: S, layer: L, to_parent: Affine2<f64>) -> Self {
+    pub(crate) fn new(slicer: S, layer: L, map_meta: CellMapMetadata) -> Self {
         Self {
             slicer,
             layer,
-            to_parent,
+            map_meta,
             _phantom: PhantomData,
         }
     }
@@ -61,14 +61,14 @@ where
         let item = self.slicer.slice(data)?;
         let index = self.slicer.index()?;
 
-        Some(((self.layer.clone(), self.to_parent.position(index)), item))
+        Some(((self.layer.clone(), self.map_meta.position(index)?), item))
     }
 
     fn slice_mut(&self, data: &'a mut ndarray::Array2<T>) -> Option<Self::OutputMut> {
         let item = self.slicer.slice_mut(data)?;
         let index = self.slicer.index()?;
 
-        Some(((self.layer.clone(), self.to_parent.position(index)), item))
+        Some(((self.layer.clone(), self.map_meta.position(index)?), item))
     }
 
     fn advance(&mut self) {

@@ -15,7 +15,7 @@
 //! of the central cell of the window:
 //!
 //! ```
-//! # use cell_map::{CellMap, CellMapParams, Layer};
+//! # use cell_map::{CellMap, CellMapParams, Layer, Bounds};
 //! # use nalgebra::Vector2;
 //! # #[derive(Layer, Clone, Debug)]
 //! # enum MyLayer {
@@ -29,7 +29,7 @@
 //! # let mut map = CellMap::<MyLayer, f64>::new_from_elem(
 //! #     CellMapParams {
 //! #         cell_size: Vector2::new(1.0, 1.0),
-//! #         num_cells: Vector2::new(5, 5),
+//! #         cell_bounds: Bounds::new((0, 5), (0, 5)).unwrap(),
 //! #         ..Default::default()
 //! #     },
 //! #     1.0,
@@ -179,7 +179,7 @@ where
         CellMapIter {
             map: self.map,
             layerer: self.layerer,
-            slicer: Positioned::new(self.slicer, current_layer, self.map.to_parent()),
+            slicer: Positioned::new(self.slicer, current_layer, self.map.metadata),
         }
     }
 }
@@ -277,11 +277,11 @@ where
     /// value.
     pub fn positioned(self) -> CellMapIterMut<'m, L, T, R, Positioned<'m, L, T, S>> {
         let current_layer = self.layerer.current().unwrap();
-        let to_parent = self.map.to_parent();
+        let map_meta = self.map.metadata;
         CellMapIterMut {
             map: self.map,
             layerer: self.layerer,
-            slicer: Positioned::new(self.slicer, current_layer, to_parent),
+            slicer: Positioned::new(self.slicer, current_layer, map_meta),
         }
     }
 }

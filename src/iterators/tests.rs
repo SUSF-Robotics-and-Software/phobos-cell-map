@@ -5,7 +5,7 @@
 // ------------------------------------------------------------------------------------------------
 
 use super::*;
-use crate::{test_utils::TestLayers, CellMapParams};
+use crate::{cell_map::Bounds, test_utils::TestLayers, CellMapParams};
 
 /// Check that iterator constructors return the right ok or error.
 #[test]
@@ -14,7 +14,7 @@ fn construction() {
     let mut map = CellMap::<TestLayers, f64>::new_from_elem(
         CellMapParams {
             cell_size: Vector2::new(1.0, 1.0),
-            num_cells: Vector2::new(5, 5),
+            cell_bounds: Bounds::new((0, 5), (0, 5)).unwrap(),
             ..Default::default()
         },
         1.0,
@@ -37,7 +37,7 @@ fn counts() -> Result<(), Error> {
     let mut map = CellMap::<TestLayers, f64>::new_from_elem(
         CellMapParams {
             cell_size: Vector2::new(1.0, 1.0),
-            num_cells: Vector2::new(5, 5),
+            cell_bounds: Bounds::new((0, 5), (0, 5)).unwrap(),
             ..Default::default()
         },
         1.0,
@@ -75,7 +75,7 @@ fn window() -> Result<(), Error> {
     let map = CellMap::<TestLayers, f64>::new_from_elem(
         CellMapParams {
             cell_size: Vector2::new(1.0, 1.0),
-            num_cells: Vector2::new(5, 6),
+            cell_bounds: Bounds::new((0, 5), (0, 6)).unwrap(),
             ..Default::default()
         },
         1.0,
@@ -128,7 +128,7 @@ fn line() -> Result<(), Error> {
     let map = CellMap::<TestLayers, f64>::new_from_elem(
         CellMapParams {
             cell_size: Vector2::new(1.0, 1.0),
-            num_cells: Vector2::new(5, 5),
+            cell_bounds: Bounds::new((0, 6), (0, 6)).unwrap(),
             ..Default::default()
         },
         1.0,
