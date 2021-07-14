@@ -179,7 +179,7 @@ where
         CellMapIter {
             map: self.map,
             layerer: self.layerer,
-            slicer: Positioned::new(self.slicer, current_layer, self.map.to_parent()),
+            slicer: Positioned::new(self.slicer, current_layer, self.map.metadata),
         }
     }
 }
@@ -277,11 +277,11 @@ where
     /// value.
     pub fn positioned(self) -> CellMapIterMut<'m, L, T, R, Positioned<'m, L, T, S>> {
         let current_layer = self.layerer.current().unwrap();
-        let to_parent = self.map.to_parent();
+        let map_meta = self.map.metadata;
         CellMapIterMut {
             map: self.map,
             layerer: self.layerer,
-            slicer: Positioned::new(self.slicer, current_layer, to_parent),
+            slicer: Positioned::new(self.slicer, current_layer, map_meta),
         }
     }
 }

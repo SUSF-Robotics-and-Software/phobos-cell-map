@@ -81,8 +81,13 @@ impl CellMapMetadata {
     /// This method won't panic if `index` is outside the map, but it's result can't be guaranteed
     /// to be a position in the map.
     pub fn position_unchecked(&self, index: Point2<usize>) -> Point2<f64> {
-        // Get the centre of the cell, which is + 0.5 cells in the x and y direction.
-        let index_centre = index.cast() + Vector2::new(0.5, 0.5);
+        // Get the centre of the cell, which is + 0.5 cells in the x and y direction, also account
+        // for the bounds by adding the lower bound
+        let index_centre = index.cast()
+            + Vector2::new(
+                self.cell_bounds.x.0 as f64 + 0.5,
+                self.cell_bounds.y.0 as f64 + 0.5,
+            );
         self.to_parent.transform_point(&index_centre)
     }
 

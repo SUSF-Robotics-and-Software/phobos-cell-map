@@ -43,7 +43,7 @@ use nalgebra::Vector2;
 let my_map = CellMap::<MyLayer, f64>::new_from_elem(
     CellMapParams {
         cell_size: Vector2::new(1.0, 1.0),
-        num_cells: Vector2::new(5, 5),
+        cell_bounds: Bounds::new((0, 5), (0, 5)).unwrap(),
         centre: Vector2::new(0.0, 0.0),
     },
     1.0,
