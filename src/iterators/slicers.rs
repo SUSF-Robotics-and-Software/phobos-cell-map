@@ -273,14 +273,20 @@ impl Line {
         let end_map = map_meta.to_parent.inverse_transform_point(&end_parent);
 
         // Get map edges in floating point for bounds check
-        let map_x_lim = (map_meta.num_cells.x) as f64;
-        let map_y_lim = (map_meta.num_cells.y) as f64;
+        let map_x_bounds = (
+            map_meta.cell_bounds.x.0 as f64,
+            map_meta.cell_bounds.x.1 as f64,
+        );
+        let map_y_bounds = (
+            map_meta.cell_bounds.y.0 as f64,
+            map_meta.cell_bounds.y.1 as f64,
+        );
 
         // Check start and end points are inside the map
-        if start_map.x < 0.0
-            || start_map.x > map_x_lim
-            || start_map.y < 0.0
-            || start_map.y > map_y_lim
+        if start_map.x < map_x_bounds.0
+            || start_map.x > map_x_bounds.1
+            || start_map.y < map_y_bounds.0
+            || start_map.y > map_y_bounds.1
         {
             return Err(Error::PositionOutsideMap(
                 "Line::Start".into(),
@@ -288,7 +294,11 @@ impl Line {
             ));
         }
 
-        if end_map.x < 0.0 || end_map.x > map_x_lim || end_map.y < 0.0 || end_map.y > map_y_lim {
+        if end_map.x < map_x_bounds.0
+            || end_map.x > map_x_bounds.1
+            || end_map.y < map_y_bounds.0
+            || end_map.y > map_y_bounds.1
+        {
             return Err(Error::PositionOutsideMap("Line::End".into(), start_parent));
         }
 
@@ -329,8 +339,9 @@ impl Line {
     /// Gets the current cell index to yield, or `None` if at the end of the line
     fn get_current_index(&self) -> Option<Point2<usize>> {
         // Current will be inside the map, since start and end were confirmed to be inside the map
-        // at construction, so simply cast
-        Some(self.current_map?.map(|v| v as usize))
+        // at construction, so simply cast, then convert from bounds to index
+        let current_map_isize = self.current_map?.map(|e| e as isize);
+        self.map_meta.cell_bounds.get_index(current_map_isize)
     }
 }
 

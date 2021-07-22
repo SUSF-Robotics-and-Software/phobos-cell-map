@@ -3,11 +3,12 @@ Plots a line iteration from a line step report
 
 Enable the "debug_iters" feature to produce reports
 '''
-#%%
+
 import matplotlib.pyplot as plt
 import numpy as np
 from math import floor, ceil
 import json
+import argparse
 
 def plot(report):
     fig, ax = plt.subplots()
@@ -50,12 +51,16 @@ def plot(report):
     plt.show()
 
 if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(description='Plots a map JSON file')
+    parser.add_argument('report_path', metavar='P', type=str, nargs=1, help='path to the line_step_report.json file to plot')
     
-    with open('../line_step_report.json', 'r') as f:
+    args = parser.parse_args()
+    
+    with open(args.report_path[0], 'r') as f:
         report = json.load(f)
 
         if len(report) > 100:
             report = report[0:100]
 
         plot(report)
-# %%
