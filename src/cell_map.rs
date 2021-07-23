@@ -492,42 +492,43 @@ where
             Point2::new(other_bounds.x.0, other_bounds.y.1).cast() + Vector2::new(0.0, 1.0),
             Point2::new(other_bounds.x.1, other_bounds.y.1).cast() + Vector2::new(1.0, 1.0),
         ];
-        let corners_in_self: Vec<Point2<f64>> = corners_in_other
+        let corners_in_parent: Vec<Point2<f64>> = corners_in_other
             .iter()
             .map(|c| other.to_parent().transform_point(c))
             .collect();
-        let other_bl_self = Point2::new(
-            corners_in_self
+        let other_bl_parent = Point2::new(
+            corners_in_parent
                 .iter()
                 .min_by_key(|c| c.x.floor() as isize)
                 .unwrap()
                 .x
-                .floor() as isize,
-            corners_in_self
+                .floor(),
+            corners_in_parent
                 .iter()
                 .min_by_key(|c| c.y.floor() as isize)
                 .unwrap()
                 .y
-                .floor() as isize,
+                .floor(),
         );
-        let other_ur_self = Point2::new(
-            corners_in_self
+        let other_ur_parent = Point2::new(
+            corners_in_parent
                 .iter()
                 .max_by_key(|c| c.x.ceil() as isize)
                 .unwrap()
                 .x
-                .ceil() as isize,
-            corners_in_self
+                .ceil(),
+            corners_in_parent
                 .iter()
                 .max_by_key(|c| c.y.ceil() as isize)
                 .unwrap()
                 .y
-                .ceil() as isize,
+                .ceil(),
         );
-        let other_in_self = Bounds::from_corners_unsorted(other_bl_self, other_ur_self);
+        let other_in_self =
+            Bounds::from_corner_positions(&self.metadata, other_bl_parent, other_ur_parent);
         let store_offset = Vector2::new(
-            other_bl_self.x.clamp(0, self.num_cells().x as isize) as usize,
-            other_bl_self.y.clamp(0, self.num_cells().y as isize) as usize,
+            other_in_self.x.0.clamp(0, self.num_cells().x as isize) as usize,
+            other_in_self.y.0.clamp(0, self.num_cells().y as isize) as usize,
         );
 
         // Calculate the union of both bounds
@@ -697,6 +698,22 @@ impl Bounds {
             x: (a.x.min(b.x), a.x.max(b.x)),
             y: (a.y.min(b.y), a.y.max(b.y)),
         }
+    }
+
+    /// Creates a new bound from the given corner positions, which do not have to be in any order.
+    ///
+    /// The metadata parameter will be used to map from parent frame position into a map frame.
+    pub(crate) fn from_corner_positions(
+        metadata: &CellMapMetadata,
+        a: Point2<f64>,
+        b: Point2<f64>,
+    ) -> Self {
+        // Get the map-rel cell of each point
+        let cell_a = metadata.get_cell(a);
+        let cell_b = metadata.get_cell(b);
+
+        // Build the bounds
+        Self::from_corners_unsorted(cell_a, cell_b)
     }
 
     /// Converts this bounds into a pair of corners, the bottom left and upper right corners
