@@ -26,6 +26,10 @@ pub enum Error {
     #[error("Parent-frame position {0} ({1}) is outside the map")]
     PositionOutsideMap(String, Point2<f64>),
 
+    /// The given index is outside the map.
+    #[error("The index {0} is outside the map")]
+    IndexOutsideMap(Point2<usize>),
+
     /// Wrong number of layers, got (first) but expected (second)
     #[error("Expected {0} layers but found {1}")]
     WrongNumberOfLayers(usize, usize),
