@@ -119,6 +119,16 @@ impl CellMapMetadata {
     /// index into the map is not guaranteed to be safe. It is possible for this function to return
     /// a negative index value, which would indicate that the cell is outside the map.
     pub unsafe fn index_unchecked(&self, position: Point2<f64>) -> Point2<isize> {
+        let cell = self.get_cell(position);
+
+        // What we have now is a "point", i.e. a map-frame point relative to the map origin. But if
+        // we want the index we have to account for the bounds of the map, so we must pass this
+        // through the bounds
+        self.cell_bounds.get_index_unchecked(cell)
+    }
+
+    /// Gets the map-origin relative cell location of the given position.
+    pub fn get_cell(&self, position: Point2<f64>) -> Point2<isize> {
         let els: Vec<isize> = self
             .to_parent
             .inverse_transform_point(&position)
@@ -136,11 +146,7 @@ impl CellMapMetadata {
             })
             .collect();
 
-        // What we have now is a "point", i.e. a map-frame point relative to the map origin. But if
-        // we want the index we have to account for the bounds of the map, so we must pass this
-        // through the bounds
-        self.cell_bounds
-            .get_index_unchecked(Point2::new(els[0], els[1]))
+        Point2::new(els[0], els[1])
     }
 
     pub(crate) fn calc_to_parent(
