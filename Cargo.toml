@@ -1,6 +1,6 @@
 [package]
 name = "cell-map"
-version = "0.5.2"
+version = "0.5.3"
 authors = ["Duncan Hamill <duncanrhamill@googlemail.com>"]
 edition = "2018"
 description = "Many-layered 2D cellular generic map"
