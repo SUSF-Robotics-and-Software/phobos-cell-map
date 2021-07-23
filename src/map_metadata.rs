@@ -142,32 +142,33 @@ impl CellMapMetadata {
         self.cell_bounds
             .get_index_unchecked(Point2::new(els[0], els[1]))
     }
-}
 
-impl From<CellMapParams> for CellMapMetadata {
-    fn from(params: CellMapParams) -> Self {
+    pub(crate) fn calc_to_parent(
+        position: Vector2<f64>,
+        rotation_rad: f64,
+        cell_size: Vector2<f64>,
+    ) -> Affine2<f64> {
         // First build isometry to convert from the parent to map
-        let isom_from_parent =
-            Isometry2::new(params.position_in_parent, params.rotation_in_parent_rad);
+        let isom_from_parent = Isometry2::new(position, rotation_rad);
 
         // Scale transformation matrix, based on cell size.
-        let scale = Matrix3::new(
-            params.cell_size.x,
-            0.0,
-            0.0,
-            0.0,
-            params.cell_size.y,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-        );
+        let scale = Matrix3::new(cell_size.x, 0.0, 0.0, 0.0, cell_size.y, 0.0, 0.0, 0.0, 1.0);
 
         // Build the affine by multiplying isom and scale, which will take the translation and
         // rotation of isom and scale it by the cell size. Scale must come first so that the isom,
         // which is in parent coordinates, is not scaled itself. Get the inverse of
         // isom_from_parent to get the to_parent
-        let to_parent = Affine2::from_matrix_unchecked(isom_from_parent.to_matrix() * scale);
+        Affine2::from_matrix_unchecked(isom_from_parent.to_matrix() * scale)
+    }
+}
+
+impl From<CellMapParams> for CellMapMetadata {
+    fn from(params: CellMapParams) -> Self {
+        let to_parent = Self::calc_to_parent(
+            params.position_in_parent,
+            params.rotation_in_parent_rad,
+            params.cell_size,
+        );
 
         Self {
             cell_size: params.cell_size,

@@ -184,15 +184,37 @@ where
         self.metadata.to_parent
     }
 
+    /// Moves this map relative to a new position and rotation relative to the parent frame.
+    ///
+    /// **Note:** This doesn't move the data relative to the map origin, the indexes into the map
+    /// remain the same, but the position of each cell in the map will change.
+    pub fn move_map(&mut self, position_in_parent: Vector2<f64>, rotation_in_parent_rad: f64) {
+        // Recalculate the map's to_parent affine
+        self.metadata.to_parent = CellMapMetadata::calc_to_parent(
+            position_in_parent,
+            rotation_in_parent_rad,
+            self.metadata.cell_size,
+        );
+
+        // Update the parameter values
+        self.params.position_in_parent = position_in_parent;
+        self.params.rotation_in_parent_rad = rotation_in_parent_rad;
+    }
+
     /// Returns whether or not the given index is inside the map.
-    pub fn is_in_map(&self, index: Point2<usize>) -> bool {
+    pub fn index_in_map(&self, index: Point2<usize>) -> bool {
         self.metadata.is_in_map(index)
+    }
+
+    /// Returns whether or not the given parent-relative position is inside the map.
+    pub fn position_in_map(&self, position: Point2<f64>) -> bool {
+        self.index(position).is_some()
     }
 
     /// Get a reference to the value at the given layer and index. Returns `None` if the index is
     /// outside the bounds of the map.
     pub fn get(&self, layer: L, index: Point2<usize>) -> Option<&T> {
-        if self.is_in_map(index) {
+        if self.index_in_map(index) {
             Some(&self[(layer, index)])
         } else {
             None
@@ -212,7 +234,7 @@ where
     /// Get a mutable reference to the value at the given layer and index. Returns `None` if the
     /// index is outside the bounds of the map.
     pub fn get_mut(&mut self, layer: L, index: Point2<usize>) -> Option<&mut T> {
-        if self.is_in_map(index) {
+        if self.index_in_map(index) {
             Some(&mut self[(layer, index)])
         } else {
             None
@@ -227,6 +249,27 @@ where
     /// This function will panic if `index` is outside the map.
     pub unsafe fn get_mut_unchecked(&mut self, layer: L, index: Point2<usize>) -> &mut T {
         &mut self[(layer, index)]
+    }
+
+    /// Set the given layer and index in the map to the given value. Returns an [`Error`] if the
+    /// index was outside the map.
+    pub fn set(&mut self, layer: L, index: Point2<usize>, value: T) -> Result<(), Error> {
+        if self.index_in_map(index) {
+            self[(layer, index)] = value;
+            Ok(())
+        } else {
+            Err(Error::IndexOutsideMap(index))
+        }
+    }
+
+    /// Set the given layer and index in the map to the given value, without checking if index is
+    /// the map.
+    ///
+    /// # Safety
+    ///
+    /// This function will panic if `index` is outside the map
+    pub unsafe fn set_unchecked(&mut self, layer: L, index: Point2<usize>, value: T) {
+        self[(layer, index)] = value;
     }
 
     /// Returns the position in the parent frame of the centre of the given cell index.
