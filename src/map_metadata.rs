@@ -21,7 +21,7 @@ use crate::{cell_map::Bounds, CellMapParams};
 /// The data in this struct is constructed from the [`CellMapParams`] provided by the user at
 /// construction of the map.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-pub(crate) struct CellMapMetadata {
+pub struct CellMapMetadata {
     /// The size (resolution) of each cell in the map, in both the `x` and `y` directions.
     pub cell_size: Vector2<f64>,
 

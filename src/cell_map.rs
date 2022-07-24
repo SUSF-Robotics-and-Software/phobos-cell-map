@@ -49,7 +49,7 @@ where
     pub(crate) data: Vec<Array2<T>>,
 
     /// Metadata associated with this map.
-    pub(crate) metadata: CellMapMetadata,
+    pub metadata: CellMapMetadata,
 
     /// The original parameters supplied to `CellMap::new()`.
     pub(crate) params: CellMapParams,
@@ -703,7 +703,7 @@ impl Bounds {
     /// Creates a new bound from the given corner positions, which do not have to be in any order.
     ///
     /// The metadata parameter will be used to map from parent frame position into a map frame.
-    pub(crate) fn from_corner_positions(
+    pub fn from_corner_positions(
         metadata: &CellMapMetadata,
         a: Point2<f64>,
         b: Point2<f64>,
